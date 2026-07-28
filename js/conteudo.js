@@ -53,27 +53,33 @@
           }).join("");
         };
         elPubs.innerHTML = itens.map(function (p, i) {
-          var corpo = String(p.corpo);
-          var curta = corpo.length > 300;
-          var resumo = curta ? corpo.slice(0, 300).replace(/\s+\S*$/, "") + "…" : corpo;
           return '<article class="card" style="margin-bottom:1.5rem"><h3>' + esc(p.titulo) + "</h3>" +
             '<p style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.8rem">' +
             dataBr(p.criada_em) + " · Dr. Lúcio Adolfo</p>" +
-            '<div class="pub-resumo" data-i="' + i + '">' + paragrafar(resumo) + "</div>" +
-            '<div class="pub-completa" data-i="' + i + '" style="display:none">' + paragrafar(corpo) + "</div>" +
-            (curta ? '<button class="btn" data-ler="' + i + '" style="cursor:pointer;background:none">Leitura completa</button>' : "") +
+            '<div class="pub-corpo clamp" data-i="' + i + '">' + paragrafar(p.corpo) + "</div>" +
             "</article>";
         }).join("");
+        // Mostra o botão só quando o texto realmente passa de 3 linhas na tela
+        requestAnimationFrame(function () {
+          elPubs.querySelectorAll(".pub-corpo").forEach(function (el) {
+            if (el.scrollHeight > el.clientHeight + 4) {
+              var b = document.createElement("button");
+              b.className = "btn";
+              b.style.cssText = "cursor:pointer;background:none;margin-top:.8rem";
+              b.textContent = "Leitura completa";
+              b.setAttribute("data-ler", el.getAttribute("data-i"));
+              el.parentNode.appendChild(b);
+            } else {
+              el.classList.remove("clamp");
+            }
+          });
+        });
         elPubs.addEventListener("click", function (ev) {
           var b = ev.target.closest("[data-ler]");
           if (!b) return;
-          var i = b.getAttribute("data-ler");
-          var resumo = elPubs.querySelector('.pub-resumo[data-i="' + i + '"]');
-          var completa = elPubs.querySelector('.pub-completa[data-i="' + i + '"]');
-          var aberta = completa.style.display !== "none";
-          completa.style.display = aberta ? "none" : "block";
-          resumo.style.display = aberta ? "block" : "none";
-          b.textContent = aberta ? "Leitura completa" : "Fechar leitura";
+          var corpo = elPubs.querySelector('.pub-corpo[data-i="' + b.getAttribute("data-ler") + '"]');
+          var recolhido = corpo.classList.toggle("clamp");
+          b.textContent = recolhido ? "Leitura completa" : "Fechar leitura";
         });
       })
       .catch(function () {});
