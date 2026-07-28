@@ -161,8 +161,8 @@ async function renderPublicacoes() {
       <textarea class="d corpo">${esc(p.corpo)}</textarea>
       <div class="acoes">
         <button class="b b-ok" data-acao="salvar">Salvar edição</button>
-        <button class="b ${p.status === "publicada" ? "b-no" : "b-ok"}" data-acao="alternar" data-status="${p.status}">
-          ${p.status === "publicada" ? "Despublicar" : "Republicar"}</button>
+        ${p.status === "despublicada" ? '<button class="b b-ok" data-acao="alternar" data-status="despublicada">Republicar</button>' : ""}
+        <button class="b b-no" data-acao="apagar">Apagar</button>
       </div></div>`
     )
     .join("");
@@ -203,6 +203,13 @@ async function agirPublicacao(card, acao) {
     return mostrar("publicacoes");
   }
   const id = card.dataset.id;
+  if (acao === "apagar") {
+    if (!confirm("Apagar esta publicação de vez? Não dá para desfazer.")) return;
+    const { error } = await sb.from("publicacoes").delete().eq("id", id);
+    if (error) return aviso("Erro: " + error.message, 6000);
+    aviso("Publicação apagada.");
+    return mostrar("publicacoes");
+  }
   if (acao === "remover-foto") {
     const { error } = await sb.from("publicacoes").update({ foto_url: "", atualizada_em: new Date().toISOString() }).eq("id", id);
     if (error) return aviso("Erro: " + error.message);
