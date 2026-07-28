@@ -33,6 +33,13 @@ async function entrar() {
   mostrar("fila");
 }
 
+// Contador de notícias aguardando decisão, exibido na aba
+async function atualizarContador() {
+  const { count } = await sb.from("noticias").select("id", { count: "exact", head: true }).eq("status", "pendente");
+  const b = document.querySelector('.abas button[data-aba="fila"]');
+  if (b) b.textContent = "Fila de Notícias" + (count ? ` (${count})` : "");
+}
+
 // ===== Fila =====
 async function mostrar(aba) {
   abaAtual = aba;
@@ -45,6 +52,7 @@ async function mostrar(aba) {
 }
 
 async function renderFila() {
+  atualizarContador();
   const { data, error } = await sb.from("noticias").select("*").eq("status", "pendente").order("criada_em", { ascending: false });
   if (error) return (conteudo.innerHTML = `<div class="vazio">Erro: ${esc(error.message)}</div>`);
   if (!data.length) return (conteudo.innerHTML = '<div class="vazio">Nenhuma notícia aguardando. O robô procura novas de hora em hora.</div>');
@@ -73,6 +81,7 @@ async function agirNoticia(card, acao) {
   if (error) return aviso("Erro: " + error.message);
   card.remove();
   aviso(acao === "aprovar" ? "Aprovada — já está no site." : acao === "rejeitar" ? "Rejeitada." : "Removida do site.");
+  atualizarContador();
   if (!conteudo.querySelector(".card")) mostrar(abaAtual);
 }
 
@@ -99,11 +108,18 @@ async function renderHistorico() {
 async function renderPublicacoes() {
   const { data, error } = await sb.from("publicacoes").select("*").order("criada_em", { ascending: false });
   if (error) return (conteudo.innerHTML = `<div class="vazio">Erro: ${esc(error.message)}</div>`);
+  const blocoFoto = (p) => `<div class="capa-linha">
+      ${p.foto_url ? `<img class="capa-mini" style="aspect-ratio:3/4" src="${esc(p.foto_url)}" alt="">` : '<div class="capa-vazia" style="aspect-ratio:3/4">sem foto</div>'}
+      <div style="flex:1">
+        <input type="file" class="arquivo-foto" accept="image/*">
+        ${p.foto_url ? '<button class="b b-no" data-acao="remover-foto" style="margin-top:.5rem;flex:none">Remover foto</button>' : ""}
+      </div></div>`;
   const lista = data
     .map(
       (p) => `<div class="card" data-id="${p.id}">
       <div class="fonte">${p.status === "publicada" ? "No site" : "Despublicada"} · ${dataBr(p.criada_em)}</div>
       <input class="t" value="${esc(p.titulo)}">
+      ${blocoFoto(p)}
       <textarea class="d corpo">${esc(p.corpo)}</textarea>
       <div class="acoes">
         <button class="b b-ok" data-acao="salvar">Salvar edição</button>
@@ -115,9 +131,23 @@ async function renderPublicacoes() {
   conteudo.innerHTML = `<div class="card" id="novaPub">
       <div class="fonte">Nova publicação</div>
       <input class="t" placeholder="Título">
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:.4rem">Foto (opcional): anexe uma imagem ou tire uma foto — aparece abaixo do título.</p>
+      <input type="file" class="arquivo-foto" accept="image/*" style="margin-bottom:.6rem">
       <textarea class="d corpo" placeholder="Escreva aqui o seu texto…"></textarea>
       <div class="acoes"><button class="b b-gold" data-acao="publicar" style="color:#181614">Publicar no site</button></div>
     </div>` + (lista || '<div class="vazio">Nenhuma publicação ainda — a primeira é sua, Dr. Lúcio.</div>');
+}
+
+async function enviarFotoPub(id, arquivo) {
+  aviso("Enviando foto…");
+  const ext = (arquivo.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+  const caminho = `pub-${id}-${Date.now()}.${ext}`;
+  const { error } = await sb.storage.from("capas").upload(caminho, arquivo, { upsert: true });
+  if (error) { aviso("Erro no envio: " + error.message); return false; }
+  const { data } = sb.storage.from("capas").getPublicUrl(caminho);
+  const { error: e2 } = await sb.from("publicacoes").update({ foto_url: data.publicUrl, atualizada_em: new Date().toISOString() }).eq("id", id);
+  if (e2) { aviso("Erro: " + e2.message); return false; }
+  return true;
 }
 
 async function agirPublicacao(card, acao) {
@@ -125,12 +155,20 @@ async function agirPublicacao(card, acao) {
     const titulo = card.querySelector(".t").value.trim();
     const corpo = card.querySelector(".d").value.trim();
     if (!titulo || !corpo) return aviso("Preencha título e texto.");
-    const { error } = await sb.from("publicacoes").insert({ titulo, corpo, status: "publicada" });
+    const arquivo = card.querySelector(".arquivo-foto")?.files?.[0] || null;
+    const { data: nova, error } = await sb.from("publicacoes").insert({ titulo, corpo, status: "publicada" }).select("id").single();
     if (error) return aviso("Erro: " + error.message);
+    if (arquivo) await enviarFotoPub(nova.id, arquivo);
     aviso("Publicado no site.");
     return mostrar("publicacoes");
   }
   const id = card.dataset.id;
+  if (acao === "remover-foto") {
+    const { error } = await sb.from("publicacoes").update({ foto_url: "", atualizada_em: new Date().toISOString() }).eq("id", id);
+    if (error) return aviso("Erro: " + error.message);
+    aviso("Foto removida.");
+    return mostrar("publicacoes");
+  }
   if (acao === "salvar") {
     const { error } = await sb.from("publicacoes").update({
       titulo: card.querySelector(".t").value.trim(),
@@ -226,9 +264,13 @@ async function enviarCapa(card, arquivo) {
 }
 
 document.addEventListener("change", (e) => {
-  if (!e.target.classList.contains("arquivo-capa")) return;
   const card = e.target.closest(".card");
-  if (e.target.files && e.target.files[0]) enviarCapa(card, e.target.files[0]);
+  const arquivo = e.target.files && e.target.files[0];
+  if (!card || !arquivo) return;
+  if (e.target.classList.contains("arquivo-capa")) return enviarCapa(card, arquivo);
+  if (e.target.classList.contains("arquivo-foto") && card.dataset.id) {
+    enviarFotoPub(card.dataset.id, arquivo).then((ok) => { if (ok) { aviso("Foto atualizada no site."); mostrar("publicacoes"); } });
+  }
 });
 
 // ===== Eventos =====

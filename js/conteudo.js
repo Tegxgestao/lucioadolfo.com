@@ -67,7 +67,7 @@
     buscar("livros?status=eq.publicado&select=titulo,selo,sinopse,capa_url&order=ordem.asc,id.asc")
       .then(function (itens) {
         if (!itens.length) return;
-        elLivros.innerHTML = itens.map(function (l) {
+        elLivros.innerHTML = itens.map(function (l, i) {
           var capa = /^https?:\/\//i.test(l.capa_url || "")
             ? '<img src="' + esc(l.capa_url) + '" alt="Capa do livro ' + esc(l.titulo) + '" style="width:100%;aspect-ratio:2/3;object-fit:cover;border:1px solid var(--gold-soft);display:block">'
             : '<div class="cover"><span>' + esc(l.titulo) + "</span></div>";
@@ -76,17 +76,38 @@
           return '<div class="book"><div>' + capa + "</div><div>" +
             "<h3>" + esc(l.titulo) + "</h3>" +
             (l.selo ? '<p class="pub">' + esc(l.selo) + "</p>" : "") +
-            "<p>" + esc(l.sinopse) + "</p>" +
-            '<a class="btn" href="' + zap + '" target="_blank" rel="noopener">Quero este livro</a>' +
+            '<div class="pub-corpo clamp sin-livro" data-li="' + i + '"><p>' + esc(l.sinopse) + "</p></div>" +
+            '<a class="btn" href="' + zap + '" target="_blank" rel="noopener" style="margin-top:.8rem">Quero este livro</a>' +
             "</div></div>";
         }).join("");
+        // "Mais detalhes" só quando a sinopse passa de 3 linhas
+        requestAnimationFrame(function () {
+          elLivros.querySelectorAll(".sin-livro").forEach(function (el) {
+            if (el.scrollHeight > el.clientHeight + 4) {
+              var b = document.createElement("button");
+              b.className = "btn btn-ler";
+              b.textContent = "Mais detalhes";
+              b.setAttribute("data-ler-livro", el.getAttribute("data-li"));
+              el.insertAdjacentElement("afterend", b);
+            } else {
+              el.classList.remove("clamp");
+            }
+          });
+        });
+        elLivros.addEventListener("click", function (ev) {
+          var b = ev.target.closest("[data-ler-livro]");
+          if (!b) return;
+          var el = elLivros.querySelector('.sin-livro[data-li="' + b.getAttribute("data-ler-livro") + '"]');
+          var recolhido = el.classList.toggle("clamp");
+          b.textContent = recolhido ? "Mais detalhes" : "Menos detalhes";
+        });
       })
       .catch(function () {});
   }
 
   var elPubs = document.getElementById("publicacoes-dinamicas");
   if (elPubs) {
-    buscar("publicacoes?status=eq.publicada&select=titulo,corpo,criada_em&order=criada_em.desc")
+    buscar("publicacoes?status=eq.publicada&select=titulo,corpo,criada_em,foto_url&order=criada_em.desc")
       .then(function (itens) {
         if (!itens.length) return;
         var embreve = document.getElementById("card-embreve");
@@ -100,6 +121,7 @@
           return '<article class="card" style="margin-bottom:1.5rem"><h3>' + esc(p.titulo) + "</h3>" +
             '<p style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.8rem">' +
             dataBr(p.criada_em) + " · Dr. Lúcio Adolfo</p>" +
+            (/^https?:\/\//i.test(p.foto_url || "") ? '<img class="pub-foto" src="' + esc(p.foto_url) + '" alt="">' : "") +
             '<div class="pub-corpo clamp" data-i="' + i + '">' + paragrafar(p.corpo) + "</div>" +
             "</article>";
         }).join("");
@@ -108,8 +130,7 @@
           elPubs.querySelectorAll(".pub-corpo").forEach(function (el) {
             if (el.scrollHeight > el.clientHeight + 4) {
               var b = document.createElement("button");
-              b.className = "btn";
-              b.style.cssText = "cursor:pointer;background:none;margin-top:.8rem";
+              b.className = "btn btn-ler";
               b.textContent = "Leitura completa";
               b.setAttribute("data-ler", el.getAttribute("data-i"));
               el.parentNode.appendChild(b);
