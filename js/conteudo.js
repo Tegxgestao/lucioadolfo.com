@@ -47,14 +47,34 @@
         if (!itens.length) return;
         var embreve = document.getElementById("card-embreve");
         if (embreve) embreve.style.display = "none";
-        elPubs.innerHTML = itens.map(function (p) {
-          var paragrafos = String(p.corpo).split(/\n{2,}|\r\n\r\n/).map(function (par) {
-            return "<p>" + esc(par).replace(/\n/g, "<br>") + "</p>";
+        var paragrafar = function (texto) {
+          return String(texto).split(/\n{2,}|\r\n\r\n/).map(function (par) {
+            return "<p style='margin-bottom:.8rem'>" + esc(par).replace(/\n/g, "<br>") + "</p>";
           }).join("");
+        };
+        elPubs.innerHTML = itens.map(function (p, i) {
+          var corpo = String(p.corpo);
+          var curta = corpo.length > 300;
+          var resumo = curta ? corpo.slice(0, 300).replace(/\s+\S*$/, "") + "…" : corpo;
           return '<article class="card" style="margin-bottom:1.5rem"><h3>' + esc(p.titulo) + "</h3>" +
             '<p style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.8rem">' +
-            dataBr(p.criada_em) + " · Dr. Lúcio Adolfo</p>" + paragrafos + "</article>";
+            dataBr(p.criada_em) + " · Dr. Lúcio Adolfo</p>" +
+            '<div class="pub-resumo" data-i="' + i + '">' + paragrafar(resumo) + "</div>" +
+            '<div class="pub-completa" data-i="' + i + '" style="display:none">' + paragrafar(corpo) + "</div>" +
+            (curta ? '<button class="btn" data-ler="' + i + '" style="cursor:pointer;background:none">Leitura completa</button>' : "") +
+            "</article>";
         }).join("");
+        elPubs.addEventListener("click", function (ev) {
+          var b = ev.target.closest("[data-ler]");
+          if (!b) return;
+          var i = b.getAttribute("data-ler");
+          var resumo = elPubs.querySelector('.pub-resumo[data-i="' + i + '"]');
+          var completa = elPubs.querySelector('.pub-completa[data-i="' + i + '"]');
+          var aberta = completa.style.display !== "none";
+          completa.style.display = aberta ? "none" : "block";
+          resumo.style.display = aberta ? "block" : "none";
+          b.textContent = aberta ? "Leitura completa" : "Fechar leitura";
+        });
       })
       .catch(function () {});
   }
