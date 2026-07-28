@@ -8,4 +8,3 @@ Estático — HTML/CSS/JS puro, publicado via GitHub Pages.
 - Capas dos livros em alta resolução (substituir os placeholders `.cover`)
 - Formação acadêmica citada em Minha História
 - Texto de biografia e lista de casos
-- E-mail de contato

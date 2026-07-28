@@ -106,7 +106,9 @@ h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.15}
   .nav-back{display:block;width:100%;text-align:center;border:1px solid var(--gold-soft);color:var(--gold);padding:.6rem .4rem;font-size:.9rem}
   .hero-menu{flex-direction:column;align-items:stretch}
   .hero-menu .btn{margin:.28rem 0;justify-content:center}
-  .hero{padding-top:0;min-height:88svh}
+  /* Foto ocupa a largura toda e o conteúdo começa abaixo dela (92vw ≈ altura da foto quadrada) */
+  .hero{padding-top:0;min-height:auto}
+  .hero .wrap{padding-top:92vw;padding-bottom:2.5rem}
   .creds .wrap{grid-template-columns:repeat(2,1fr)}
   .grid-2,.grid-3{grid-template-columns:1fr}
   .page-hero{padding-top:3rem}
