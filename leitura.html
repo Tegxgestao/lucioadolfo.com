@@ -5,17 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Leitura — Lúcio Adolfo</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=9">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#141311;--line:#2e2a24;--text:#ece7dc;--muted:#a59d8e;--gold:#c2a05f;--gold-soft:#8a7344}
+:root{--bg:#141311;--surface:#1c1a17;--line:#2e2a24;--text:#ece7dc;--muted:#a59d8e;--gold:#c2a05f;--gold-soft:#8a7344}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;height:100vh;height:100svh;display:flex;flex-direction:column}
-.barra{display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;background:#1c1a17;border-bottom:1px solid var(--line);flex-wrap:wrap}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.75;font-size:1.0625rem}
+.barra{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:.7rem;padding:.7rem 1rem;background:rgba(20,19,17,.96);border-bottom:1px solid var(--line);flex-wrap:wrap}
 .barra a{text-decoration:none;font-size:.9rem;padding:.5rem .9rem;border:1px solid var(--gold-soft);color:var(--gold)}
 .barra a.voltar{background:var(--gold);color:#181614;border-color:var(--gold);font-weight:600}
-.barra span{color:var(--muted);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;margin-left:auto}
-.dica{padding:.45rem 1rem;font-size:.8rem;color:var(--muted);background:#181614;border-bottom:1px solid var(--line)}
-iframe{flex:1;width:100%;border:0;background:#fff}
+.barra span{color:var(--muted);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;margin-left:auto}
+main{max-width:720px;margin:0 auto;padding:2.2rem 1.25rem 4rem}
+h1{font-family:"Playfair Display",Georgia,serif;font-size:clamp(1.7rem,4.5vw,2.4rem);line-height:1.2;margin-bottom:.9rem}
+.credito{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:1.6rem}
+img.capa{width:100%;border:1px solid var(--line);margin-bottom:1.8rem;display:block}
+article p{margin-bottom:1.1rem}
+.rodape-fonte{margin-top:2.8rem;padding-top:1.4rem;border-top:1px solid var(--line);color:var(--muted);font-size:.88rem}
+.rodape-fonte a{color:var(--gold);text-decoration:none}
+.estado{text-align:center;color:var(--muted);padding:4rem 1rem}
+.estado a{display:inline-block;margin-top:1.2rem;text-decoration:none;font-size:.95rem;padding:.8rem 1.4rem;background:var(--gold);color:#181614;font-weight:600}
 </style>
 </head>
 <body>
@@ -24,20 +34,47 @@ iframe{flex:1;width:100%;border:0;background:#fff}
   <a id="original" target="_blank" rel="noopener">Abrir no site original</a>
   <span id="fonte"></span>
 </div>
-<div class="dica">Você está lendo dentro do site do Dr. Lúcio Adolfo. Se a notícia não aparecer abaixo, o veículo não permite exibição incorporada — toque em "Abrir no site original".</div>
-<iframe id="quadro" title="Notícia original" referrerpolicy="no-referrer"></iframe>
+<main id="leitor"><div class="estado">Carregando a notícia…</div></main>
+<script src="paineldolucio/config.js?v=11"></script>
 <script>
-var qs = new URLSearchParams(location.search);
-var u = qs.get("u") || "";
-var f = (qs.get("f") || "").slice(0, 40);
-if (!/^https?:\/\//i.test(u)) {
-  location.replace("noticias.html");
-} else {
-  document.getElementById("quadro").src = u;
-  var o = document.getElementById("original");
-  o.href = u;
+(function () {
+  var qs = new URLSearchParams(location.search);
+  var u = qs.get("u") || "";
+  var f = (qs.get("f") || "").slice(0, 40);
+  var leitor = document.getElementById("leitor");
+  var esc = function (s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  };
+  if (!/^https?:\/\//i.test(u)) { location.replace("noticias.html"); return; }
+  document.getElementById("original").href = u;
   document.getElementById("fonte").textContent = f;
-}
+
+  var falha = function () {
+    leitor.innerHTML = '<div class="estado">Não foi possível carregar esta notícia aqui dentro.<br>' +
+      '<a href="' + esc(u) + '" target="_blank" rel="noopener">Ler no site original</a></div>';
+  };
+
+  var cfg = window.PAINEL_CONFIG;
+  if (!cfg || !cfg.SUPABASE_URL) { falha(); return; }
+  fetch(cfg.SUPABASE_URL + "/functions/v1/extrair?u=" + encodeURIComponent(u), {
+    headers: { apikey: cfg.SUPABASE_ANON_KEY, Authorization: "Bearer " + cfg.SUPABASE_ANON_KEY }
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d || d.erro || !d.paragrafos || !d.paragrafos.length) return falha();
+      var html = "<h1>" + esc(d.titulo || f) + "</h1>" +
+        '<p class="credito">' + esc(f) + "</p>" +
+        (/^https?:\/\//i.test(d.imagem || "") ? '<img class="capa" src="' + esc(d.imagem) + '" alt="">' : "") +
+        "<article>" + d.paragrafos.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + "</article>" +
+        '<div class="rodape-fonte">Conteúdo original de <strong>' + esc(f || "veículo de imprensa") +
+        "</strong>, exibido aqui para leitura. Todos os direitos pertencem ao veículo — " +
+        '<a href="' + esc(u) + '" target="_blank" rel="noopener">acesse a matéria na fonte</a>.</div>';
+      leitor.innerHTML = html;
+    })
+    .catch(falha);
+})();
 </script>
 </body>
 </html>

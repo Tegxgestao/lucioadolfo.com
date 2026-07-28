@@ -161,13 +161,6 @@ $("#btnEntrar").addEventListener("click", entrar);
 $("#senha").addEventListener("keydown", (e) => e.key === "Enter" && entrar());
 $("#btnSair").addEventListener("click", async () => { await sb.auth.signOut(); location.reload(); });
 
-// ===== Dica de instalação (aparece só no navegador do celular, some no app instalado) =====
-var instalado = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-if (!instalado && /iphone|ipad|android/i.test(navigator.userAgent)) {
-  var dica = document.getElementById("dicaInstalar");
-  if (dica) dica.style.display = "block";
-}
-
 // ===== Início =====
 if (!cfg.SUPABASE_URL) {
   $("#erroLogin").textContent = "Painel ainda não configurado.";
