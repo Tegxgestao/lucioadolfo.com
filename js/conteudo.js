@@ -84,12 +84,20 @@
             '<div class="pub-corpo clamp sin-livro" data-li="' + i + '"><p>' + esc(l.sinopse) + "</p></div>" +
             "</div></div>";
         }).join("");
-        // Esconde o "Mais detalhes" quando a sinopse cabe inteira
+        // A descrição recolhida desce até a linha do botão "Mais detalhes";
+        // o botão some quando o texto cabe inteiro
         requestAnimationFrame(function () {
-          elLivros.querySelectorAll(".sin-livro").forEach(function (el) {
-            if (el.scrollHeight <= el.clientHeight + 4) {
+          elLivros.querySelectorAll(".book").forEach(function (book) {
+            var col = book.querySelector(".col-capa");
+            var el = book.querySelector(".sin-livro");
+            if (!col || !el) return;
+            var alvo = Math.max(80, Math.round(col.getBoundingClientRect().bottom - el.getBoundingClientRect().top));
+            el.dataset.alvo = alvo;
+            el.style.maxHeight = alvo + "px";
+            if (el.scrollHeight <= alvo + 4) {
               el.classList.remove("clamp");
-              var b = elLivros.querySelector('[data-ler-livro="' + el.getAttribute("data-li") + '"]');
+              el.style.maxHeight = "none";
+              var b = book.querySelector("[data-ler-livro]");
               if (b) b.style.display = "none";
             }
           });
@@ -99,6 +107,7 @@
           if (!b) return;
           var el = elLivros.querySelector('.sin-livro[data-li="' + b.getAttribute("data-ler-livro") + '"]');
           var recolhido = el.classList.toggle("clamp");
+          el.style.maxHeight = recolhido ? el.dataset.alvo + "px" : "none";
           b.textContent = recolhido ? "Mais detalhes" : "Menos detalhes";
         });
       })
