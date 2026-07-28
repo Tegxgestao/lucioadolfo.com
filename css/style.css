@@ -35,7 +35,7 @@ h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.15}
 
 /* ===== Hero da Home ===== */
 .hero{min-height:100vh;min-height:100svh;display:flex;align-items:center;position:relative;isolation:isolate;padding-top:64px}
-.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:url("../img/hero-home.jpg") no-repeat 70% 20%/cover}
+.hero::before{content:"";position:absolute;inset:0;z-index:-2;background:url("../img/hero-home.jpg?v=3") no-repeat 70% 20%/cover}
 .hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,var(--bg) 30%,rgba(20,19,17,.72) 60%,rgba(20,19,17,.35))}
 .hero h1{font-size:clamp(2.8rem,7vw,5rem)}
 .hero .tagline{font-size:1.25rem;color:var(--muted);max-width:34rem;margin:1.2rem 0 2rem}
@@ -117,7 +117,5 @@ h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.15}
   .page-hero{padding-top:3rem}
   .page-hero .wrap{grid-template-columns:1fr}
   .photo-frame{max-width:420px}
-  /* Foto do hero na largura exata da tela (imagem quadrada: altura renderizada = 100vw); o degradê emenda no fundo a partir desse ponto */
   .hero::before{background-size:100% auto;background-position:center top}
-  .hero::after{background:linear-gradient(180deg,rgba(20,19,17,.38) 0,rgba(20,19,17,.72) 72vw,#141311 98vw)}
 }
