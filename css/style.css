@@ -95,7 +95,11 @@ h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.15}
 .book{display:grid;grid-template-columns:150px 1fr;gap:1.5rem;background:var(--surface);border:1px solid var(--line);padding:1.5rem;align-items:start}
 .cover{aspect-ratio:2/3;background:linear-gradient(160deg,#262117,#171512);border:1px solid var(--gold-soft);display:flex;align-items:center;justify-content:center;padding:1rem;text-align:center}
 .cover span{font-family:var(--serif);color:var(--gold);font-size:1rem;line-height:1.35}
-.book .col-capa{display:flex;flex-direction:column;gap:.6rem}
+.book{grid-template-areas:"capa info" "capa desc"}
+.book .col-capa{grid-area:capa;display:flex;flex-direction:column;gap:.6rem}
+.book .col-info{grid-area:info}
+.book .sin-wrap{grid-area:desc}
+.m-only{display:none}
 .btn-livro{margin:0;padding:.6rem .3rem;font-size:.76rem;justify-content:center;text-align:center;width:100%}
 .esgotado{border-color:var(--line);color:var(--muted);cursor:default;letter-spacing:.14em;text-transform:uppercase}
 .esgotado:hover{background:none;color:var(--muted)}
@@ -156,6 +160,14 @@ h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.15}
   .grid-2,.grid-3{grid-template-columns:1fr}
   .page-hero{padding-top:3rem}
   .page-hero .wrap{grid-template-columns:1fr}
+  /* Livro no celular: capa à esquerda; título, editora e botões à direita;
+     descrição abaixo ocupando toda a largura (4 linhas por padrão) */
+  .book{grid-template-areas:"capa info" "desc desc";grid-template-columns:140px 1fr;gap:1rem}
+  .book .d-only{display:none}
+  .book .m-only{display:inline-flex;width:100%}
+  .book .col-info h3{font-size:1.1rem}
+  .book .col-info .btn-livro{margin-bottom:.5rem}
+  .book .sin-wrap{margin-top:.2rem}
   .photo-frame{max-width:420px}
   .hero::before{background-size:100% auto;background-position:center top}
 }

@@ -73,40 +73,53 @@
             : '<div class="cover"><span>' + esc(l.titulo) + "</span></div>";
           var zap = "https://wa.me/5531999237641?text=" +
             encodeURIComponent("Olá! Tenho interesse no livro " + l.titulo + ".");
-          var acaoLivro = (l.estoque > 0)
-            ? '<a class="btn btn-livro" href="' + zap + '" target="_blank" rel="noopener">Quero este livro</a>'
-            : '<span class="btn btn-livro esgotado">Esgotado</span>';
-          return '<div class="book"><div class="col-capa">' + capa + acaoLivro +
-            '<button class="btn btn-livro btn-ler" data-ler-livro="' + i + '" style="margin-top:0">Mais detalhes</button>' +
-            "</div><div>" +
+          var acaoLivro = function (cls) {
+            return (l.estoque > 0)
+              ? '<a class="btn btn-livro ' + cls + '" href="' + zap + '" target="_blank" rel="noopener">Quero este livro</a>'
+              : '<span class="btn btn-livro esgotado ' + cls + '">Esgotado</span>';
+          };
+          var btnDet = function (cls) {
+            return '<button class="btn btn-livro btn-ler ' + cls + '" data-ler-livro="' + i + '" style="margin-top:0">Mais detalhes</button>';
+          };
+          return '<div class="book"><div class="col-capa">' + capa + acaoLivro("d-only") + btnDet("d-only") +
+            '</div><div class="col-info">' +
             "<h3>" + esc(l.titulo) + "</h3>" +
             (l.selo ? '<p class="pub">' + esc(l.selo) + "</p>" : "") +
+            acaoLivro("m-only") + btnDet("m-only") +
+            '</div><div class="sin-wrap">' +
             '<div class="pub-corpo clamp sin-livro" data-li="' + i + '"><p>' + esc(l.sinopse) + "</p></div>" +
             "</div></div>";
         }).join("");
         // A descrição recolhida desce até a linha do botão "Mais detalhes".
         // Remede sempre que capas e fontes terminam de carregar.
         function ajustarLivros() {
+          var mobile = window.matchMedia("(max-width:820px)").matches;
           elLivros.querySelectorAll(".book").forEach(function (book) {
             var col = book.querySelector(".col-capa");
             var el = book.querySelector(".sin-livro");
-            var b = book.querySelector("[data-ler-livro]");
+            var botoes = book.querySelectorAll("[data-ler-livro]");
             if (!col || !el || el.dataset.aberto === "1") return;
             el.classList.add("clamp");
-            var alvo = Math.max(80, Math.round(col.getBoundingClientRect().bottom - el.getBoundingClientRect().top));
+            var alvo;
+            if (mobile) {
+              // No celular: 4 linhas por padrão
+              alvo = Math.round((parseFloat(getComputedStyle(el).lineHeight) || 27) * 4);
+            } else {
+              alvo = Math.max(80, Math.round(col.getBoundingClientRect().bottom - el.getBoundingClientRect().top));
+            }
             el.dataset.alvo = alvo;
             el.style.maxHeight = alvo + "px";
-            if (el.scrollHeight <= alvo + 4) {
+            var cabe = el.scrollHeight <= alvo + 4;
+            if (cabe) {
               el.classList.remove("clamp");
               el.style.maxHeight = "none";
-              if (b) b.style.display = "none";
-            } else if (b) {
-              b.style.display = "";
             }
+            botoes.forEach(function (b) { b.style.visibility = cabe ? "hidden" : "visible"; });
           });
         }
         requestAnimationFrame(ajustarLivros);
         window.addEventListener("load", ajustarLivros);
+        window.addEventListener("resize", ajustarLivros);
         if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarLivros);
         elLivros.querySelectorAll(".col-capa img").forEach(function (im) {
           im.addEventListener("load", ajustarLivros);
@@ -133,18 +146,21 @@
           }
           var b = ev.target.closest("[data-ler-livro]");
           if (!b) return;
-          var el = elLivros.querySelector('.sin-livro[data-li="' + b.getAttribute("data-ler-livro") + '"]');
-          if (el.classList.contains("clamp")) {
+          var idx = b.getAttribute("data-ler-livro");
+          var el = elLivros.querySelector('.sin-livro[data-li="' + idx + '"]');
+          var abrir = el.classList.contains("clamp");
+          if (abrir) {
             el.classList.remove("clamp");
             el.style.maxHeight = "none";
             el.dataset.aberto = "1";
-            b.textContent = "Menos detalhes";
           } else {
             el.dataset.aberto = "";
             el.classList.add("clamp");
             el.style.maxHeight = el.dataset.alvo + "px";
-            b.textContent = "Mais detalhes";
           }
+          elLivros.querySelectorAll('[data-ler-livro="' + idx + '"]').forEach(function (x) {
+            x.textContent = abrir ? "Menos detalhes" : "Mais detalhes";
+          });
         });
       })
       .catch(function () {});
