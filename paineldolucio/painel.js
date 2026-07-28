@@ -7,11 +7,48 @@ const conteudo = $("#conteudo");
 let sb = null;
 let abaAtual = "fila";
 
-function aviso(msg) {
+function aviso(msg, ms) {
   const el = $("#aviso");
   el.textContent = msg;
   el.classList.add("ver");
-  setTimeout(() => el.classList.remove("ver"), 2600);
+  clearTimeout(aviso._t);
+  aviso._t = setTimeout(() => el.classList.remove("ver"), ms || 2600);
+}
+
+// Garante sessão válida antes de qualquer ação; reabre a senha se expirou
+async function sessaoOk() {
+  const { data } = await sb.auth.getSession();
+  const s = data && data.session;
+  if (s && s.expires_at * 1000 - Date.now() > 60000) return true;
+  const r = await sb.auth.refreshSession();
+  if (r && r.data && r.data.session) return true;
+  $("#telaLogin").style.display = "flex";
+  $("#senha").value = "";
+  aviso("Sessão expirada — digite a senha novamente.", 6000);
+  return false;
+}
+
+// Comprime e converte a foto para JPEG no aparelho (rápido e compatível)
+function redimensionar(arquivo) {
+  return new Promise((res) => {
+    try {
+      const url = URL.createObjectURL(arquivo);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const MAX = 1400;
+          let w = img.naturalWidth, h = img.naturalHeight;
+          if (w > MAX || h > MAX) { const f = Math.min(MAX / w, MAX / h); w = Math.round(w * f); h = Math.round(h * f); }
+          const c = document.createElement("canvas");
+          c.width = w; c.height = h;
+          c.getContext("2d").drawImage(img, 0, 0, w, h);
+          c.toBlob((b) => { URL.revokeObjectURL(url); res(b || arquivo); }, "image/jpeg", 0.85);
+        } catch (e) { res(arquivo); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); res(arquivo); };
+      img.src = url;
+    } catch (e) { res(arquivo); }
+  });
 }
 const esc = (s = "") =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -72,6 +109,7 @@ async function renderFila() {
 }
 
 async function agirNoticia(card, acao) {
+  if (!(await sessaoOk())) return;
   const id = card.dataset.id;
   const campos =
     acao === "aprovar"
@@ -139,11 +177,12 @@ async function renderPublicacoes() {
 }
 
 async function enviarFotoPub(id, arquivo) {
-  aviso("Enviando foto…");
-  const ext = (arquivo.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-  const caminho = `pub-${id}-${Date.now()}.${ext}`;
-  const { error } = await sb.storage.from("capas").upload(caminho, arquivo, { upsert: true });
-  if (error) { aviso("Erro no envio: " + error.message); return false; }
+  if (!(await sessaoOk())) return false;
+  aviso("Enviando foto…", 8000);
+  const blob = await redimensionar(arquivo);
+  const caminho = `pub-${id}-${Date.now()}.jpg`;
+  const { error } = await sb.storage.from("capas").upload(caminho, blob, { upsert: true, contentType: "image/jpeg" });
+  if (error) { aviso("Erro no envio da foto: " + error.message, 6000); return false; }
   const { data } = sb.storage.from("capas").getPublicUrl(caminho);
   const { error: e2 } = await sb.from("publicacoes").update({ foto_url: data.publicUrl, atualizada_em: new Date().toISOString() }).eq("id", id);
   if (e2) { aviso("Erro: " + e2.message); return false; }
@@ -151,6 +190,7 @@ async function enviarFotoPub(id, arquivo) {
 }
 
 async function agirPublicacao(card, acao) {
+  if (!(await sessaoOk())) return;
   if (acao === "publicar") {
     const titulo = card.querySelector(".t").value.trim();
     const corpo = card.querySelector(".d").value.trim();
@@ -218,6 +258,7 @@ async function renderLivros() {
 }
 
 async function agirLivro(card, acao) {
+  if (!(await sessaoOk())) return;
   const id = card.dataset.id;
   if (acao === "novo-livro") {
     const titulo = card.querySelector(".t").value.trim();
@@ -250,15 +291,16 @@ async function agirLivro(card, acao) {
 
 async function enviarCapa(card, arquivo) {
   const id = card.dataset.id;
-  if (!id) return aviso("Adicione o livro primeiro; depois envie a capa.");
-  aviso("Enviando capa…");
-  const ext = (arquivo.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-  const caminho = `livro-${id}-${Date.now()}.${ext}`;
-  const { error } = await sb.storage.from("capas").upload(caminho, arquivo, { upsert: true });
-  if (error) return aviso("Erro no envio: " + error.message);
+  if (!id) return aviso("Adicione o livro primeiro; depois envie a capa.", 5000);
+  if (!(await sessaoOk())) return;
+  aviso("Enviando capa…", 8000);
+  const blob = await redimensionar(arquivo);
+  const caminho = `livro-${id}-${Date.now()}.jpg`;
+  const { error } = await sb.storage.from("capas").upload(caminho, blob, { upsert: true, contentType: "image/jpeg" });
+  if (error) return aviso("Erro no envio da capa: " + error.message, 6000);
   const { data } = sb.storage.from("capas").getPublicUrl(caminho);
   const { error: e2 } = await sb.from("livros").update({ capa_url: data.publicUrl, atualizada_em: new Date().toISOString() }).eq("id", id);
-  if (e2) return aviso("Erro: " + e2.message);
+  if (e2) return aviso("Erro: " + e2.message, 6000);
   aviso("Capa atualizada no site.");
   mostrar("livros");
 }
