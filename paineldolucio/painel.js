@@ -231,13 +231,16 @@ async function renderLivros() {
   const { data, error } = await sb.from("livros").select("*").order("ordem", { ascending: true }).order("id", { ascending: true });
   if (error) return (conteudo.innerHTML = `<div class="vazio">Erro: ${esc(error.message)}</div>`);
   const cartao = (l) => `<div class="card" data-id="${l.id}">
-      <div class="fonte">${l.status === "publicado" ? "No site" : "Oculto"} · ordem ${l.ordem}</div>
+      <div class="fonte">${l.status === "publicado" ? "No site" : "Oculto"} · ordem ${l.ordem} · ${l.estoque > 0 ? "estoque: " + l.estoque : "ESGOTADO"}</div>
       <div class="capa-linha">
         ${l.capa_url ? `<img class="capa-mini" src="${esc(l.capa_url)}" alt="">` : '<div class="capa-vazia">sem capa</div>'}
         <div style="flex:1">
           <input class="t" value="${esc(l.titulo)}" placeholder="Título">
           <input class="s" value="${esc(l.selo)}" placeholder="Editora / selo">
-          <input class="o" type="number" value="${l.ordem}" placeholder="Ordem" style="max-width:7rem">
+          <label style="font-size:.72rem;color:var(--muted)">Ordem no site</label>
+          <input class="o" type="number" value="${l.ordem}" style="max-width:7rem">
+          <label style="font-size:.72rem;color:var(--muted)">Livros em estoque (0 = esgotado)</label>
+          <input class="e" type="number" min="0" value="${l.estoque}" style="max-width:7rem">
         </div>
       </div>
       <textarea class="d">${esc(l.sinopse)}</textarea>
@@ -251,6 +254,7 @@ async function renderLivros() {
       <div class="fonte">Novo livro</div>
       <input class="t" placeholder="Título">
       <input class="s" placeholder="Editora / selo">
+      <input class="e" type="number" min="0" placeholder="Livros em estoque" style="max-width:12rem">
       <textarea class="d" placeholder="Comentário / sinopse do livro"></textarea>
       <div class="acoes"><button class="b b-gold" data-acao="novo-livro" style="color:#181614">Adicionar livro</button></div>
       <p style="font-size:.78rem;color:var(--muted);margin-top:.5rem">Depois de adicionar, envie a foto da capa no cartão do livro.</p>
@@ -264,21 +268,28 @@ async function agirLivro(card, acao) {
     const titulo = card.querySelector(".t").value.trim();
     if (!titulo) return aviso("Dê um título ao livro.");
     const { error } = await sb.from("livros").insert({
-      titulo, selo: card.querySelector(".s").value.trim(), sinopse: card.querySelector(".d").value.trim(),
+      titulo,
+      selo: card.querySelector(".s").value.trim(),
+      sinopse: card.querySelector(".d").value.trim(),
+      estoque: Math.max(0, parseInt(card.querySelector(".e").value, 10) || 0),
     });
     if (error) return aviso("Erro: " + error.message);
     aviso("Livro adicionado ao site.");
     return mostrar("livros");
   }
   if (acao === "salvar-livro") {
+    const estoque = Math.max(0, parseInt(card.querySelector(".e").value, 10) || 0);
     const { error } = await sb.from("livros").update({
       titulo: card.querySelector(".t").value.trim(),
       selo: card.querySelector(".s").value.trim(),
       sinopse: card.querySelector(".d").value.trim(),
       ordem: parseInt(card.querySelector(".o").value, 10) || 100,
+      estoque,
       atualizada_em: new Date().toISOString(),
     }).eq("id", id);
-    return error ? aviso("Erro: " + error.message) : aviso("Livro salvo.");
+    if (error) return aviso("Erro: " + error.message, 6000);
+    aviso(estoque > 0 ? "Livro salvo — " + estoque + " em estoque." : "Livro salvo — aparecerá como ESGOTADO no site.");
+    return mostrar("livros");
   }
   if (acao === "alternar-livro") {
     const novo = card.querySelector('[data-acao="alternar-livro"]').dataset.status === "publicado" ? "oculto" : "publicado";

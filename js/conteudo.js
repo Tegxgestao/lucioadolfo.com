@@ -64,7 +64,7 @@
 
   var elLivros = document.getElementById("lista-livros");
   if (elLivros) {
-    buscar("livros?status=eq.publicado&select=titulo,selo,sinopse,capa_url&order=ordem.asc,id.asc")
+    buscar("livros?status=eq.publicado&select=titulo,selo,sinopse,capa_url,estoque&order=ordem.asc,id.asc")
       .then(function (itens) {
         if (!itens.length) return;
         elLivros.innerHTML = itens.map(function (l, i) {
@@ -73,8 +73,10 @@
             : '<div class="cover"><span>' + esc(l.titulo) + "</span></div>";
           var zap = "https://wa.me/5531999237641?text=" +
             encodeURIComponent("Olá! Tenho interesse no livro " + l.titulo + ".");
-          return '<div class="book"><div class="col-capa">' + capa +
-            '<a class="btn btn-livro" href="' + zap + '" target="_blank" rel="noopener">Quero este livro</a>' +
+          var acaoLivro = (l.estoque > 0)
+            ? '<a class="btn btn-livro" href="' + zap + '" target="_blank" rel="noopener">Quero este livro</a>'
+            : '<span class="btn btn-livro esgotado">Esgotado</span>';
+          return '<div class="book"><div class="col-capa">' + capa + acaoLivro +
             '<button class="btn btn-livro btn-ler" data-ler-livro="' + i + '" style="margin-top:0">Mais detalhes</button>' +
             "</div><div>" +
             "<h3>" + esc(l.titulo) + "</h3>" +
