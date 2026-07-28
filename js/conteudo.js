@@ -73,24 +73,22 @@
             : '<div class="cover"><span>' + esc(l.titulo) + "</span></div>";
           var zap = "https://wa.me/5531999237641?text=" +
             encodeURIComponent("Olá! Tenho interesse no livro " + l.titulo + ".");
-          return '<div class="book"><div>' + capa + "</div><div>" +
+          return '<div class="book"><div class="col-capa">' + capa +
+            '<a class="btn btn-livro" href="' + zap + '" target="_blank" rel="noopener">Quero este livro</a>' +
+            '<button class="btn btn-livro btn-ler" data-ler-livro="' + i + '" style="margin-top:0">Mais detalhes</button>' +
+            "</div><div>" +
             "<h3>" + esc(l.titulo) + "</h3>" +
             (l.selo ? '<p class="pub">' + esc(l.selo) + "</p>" : "") +
             '<div class="pub-corpo clamp sin-livro" data-li="' + i + '"><p>' + esc(l.sinopse) + "</p></div>" +
-            '<a class="btn" href="' + zap + '" target="_blank" rel="noopener" style="margin-top:.8rem">Quero este livro</a>' +
             "</div></div>";
         }).join("");
-        // "Mais detalhes" só quando a sinopse passa de 3 linhas
+        // Esconde o "Mais detalhes" quando a sinopse cabe inteira
         requestAnimationFrame(function () {
           elLivros.querySelectorAll(".sin-livro").forEach(function (el) {
-            if (el.scrollHeight > el.clientHeight + 4) {
-              var b = document.createElement("button");
-              b.className = "btn btn-ler";
-              b.textContent = "Mais detalhes";
-              b.setAttribute("data-ler-livro", el.getAttribute("data-li"));
-              el.insertAdjacentElement("afterend", b);
-            } else {
+            if (el.scrollHeight <= el.clientHeight + 4) {
               el.classList.remove("clamp");
+              var b = elLivros.querySelector('[data-ler-livro="' + el.getAttribute("data-li") + '"]');
+              if (b) b.style.display = "none";
             }
           });
         });
