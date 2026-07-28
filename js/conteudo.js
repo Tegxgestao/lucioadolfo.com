@@ -69,7 +69,7 @@
         if (!itens.length) return;
         elLivros.innerHTML = itens.map(function (l, i) {
           var capa = /^https?:\/\//i.test(l.capa_url || "")
-            ? '<img src="' + esc(l.capa_url) + '" alt="Capa do livro ' + esc(l.titulo) + '" style="width:100%;aspect-ratio:2/3;object-fit:cover;border:1px solid var(--gold-soft);display:block">'
+            ? '<img src="' + esc(l.capa_url) + '" alt="Capa do livro ' + esc(l.titulo) + '" class="capa-zoom" style="width:100%;aspect-ratio:2/3;object-fit:cover;border:1px solid var(--gold-soft);display:block">'
             : '<div class="cover"><span>' + esc(l.titulo) + "</span></div>";
           var zap = "https://wa.me/5531999237641?text=" +
             encodeURIComponent("Olá! Tenho interesse no livro " + l.titulo + ".");
@@ -112,6 +112,25 @@
           im.addEventListener("load", ajustarLivros);
         });
         elLivros.addEventListener("click", function (ev) {
+          var capaZoom = ev.target.closest(".capa-zoom");
+          if (capaZoom) {
+            var lb = document.createElement("div");
+            lb.className = "lightbox";
+            var grande = document.createElement("img");
+            grande.src = capaZoom.src;
+            grande.alt = capaZoom.alt || "";
+            var x = document.createElement("button");
+            x.className = "fechar";
+            x.setAttribute("aria-label", "Fechar");
+            x.textContent = "✕";
+            lb.appendChild(x);
+            lb.appendChild(grande);
+            lb.addEventListener("click", function (e) {
+              if (e.target !== grande) lb.remove();
+            });
+            document.body.appendChild(lb);
+            return;
+          }
           var b = ev.target.closest("[data-ler-livro]");
           if (!b) return;
           var el = elLivros.querySelector('.sin-livro[data-li="' + b.getAttribute("data-ler-livro") + '"]');
@@ -164,6 +183,14 @@
               el.classList.remove("clamp");
             }
           });
+        });
+        // Foto horizontal ocupa toda a largura; vertical mantém o formato 3x4
+        elPubs.querySelectorAll(".pub-foto").forEach(function (im) {
+          var ajustar = function () {
+            if (im.naturalWidth > im.naturalHeight) im.classList.add("larga");
+          };
+          if (im.complete && im.naturalWidth) ajustar();
+          else im.addEventListener("load", ajustar);
         });
         elPubs.addEventListener("click", function (ev) {
           var b = ev.target.closest("[data-ler]");
