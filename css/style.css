@@ -99,6 +99,7 @@ h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.15}
 .book .col-capa{grid-area:capa;display:flex;flex-direction:column;gap:.6rem}
 .book .col-info{grid-area:info}
 .book .sin-wrap{grid-area:desc}
+.sin-livro{text-align:justify;hyphens:auto;-webkit-hyphens:auto}
 .m-only{display:none}
 .btn-livro{margin:0;padding:.6rem .3rem;font-size:.76rem;justify-content:center;text-align:center;width:100%}
 .esgotado{border-color:var(--line);color:var(--muted);cursor:default;letter-spacing:.14em;text-transform:uppercase}
