@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel do Lucio</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Painel do Lucio">
+<meta name="theme-color" content="#141311">
+<link rel="icon" type="image/png" href="icone-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#141311;--surface:#1c1a17;--line:#2e2a24;--text:#ece7dc;--muted:#a59d8e;--gold:#c2a05f;--gold-soft:#8a7344;--ok:#4a9d5f;--no:#b0523f}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.6;font-size:1rem;padding-bottom:4rem}
+h1,h2{font-family:"Playfair Display",Georgia,serif}
+.topo{position:sticky;top:0;z-index:10;background:rgba(20,19,17,.95);border-bottom:1px solid var(--line);padding:.9rem 1rem;display:flex;align-items:center;justify-content:space-between}
+.topo h1{font-size:1.15rem}.topo h1 span{color:var(--gold)}
+.sair{background:none;border:1px solid var(--line);color:var(--muted);padding:.35rem .8rem;cursor:pointer;font-size:.85rem}
+.abas{display:flex;border-bottom:1px solid var(--line);background:var(--surface)}
+.abas button{flex:1;background:none;border:none;color:var(--muted);padding:.85rem .3rem;font-size:.92rem;cursor:pointer;border-bottom:2px solid transparent}
+.abas button.ativa{color:var(--gold);border-bottom-color:var(--gold)}
+main{max-width:720px;margin:0 auto;padding:1rem}
+.card{background:var(--surface);border:1px solid var(--line);padding:1rem;margin-bottom:1rem}
+.card .fonte{font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:.4rem}
+.card input,.card textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);padding:.6rem;font-family:inherit;font-size:.95rem;margin-bottom:.6rem}
+.card textarea{min-height:5.5rem;resize:vertical}
+.card textarea.corpo{min-height:12rem}
+.acoes{display:flex;gap:.6rem;flex-wrap:wrap}
+.b{border:none;padding:.65rem 1rem;font-size:.9rem;cursor:pointer;color:#fff;flex:1;min-width:8rem}
+.b-ok{background:var(--ok)} .b-no{background:var(--no)}
+.b-link{background:none;border:1px solid var(--gold-soft);color:var(--gold);text-align:center;text-decoration:none;padding:.65rem 1rem;font-size:.9rem;flex:1;min-width:8rem}
+.b-gold{background:var(--gold);color:#181614}
+.vazio{color:var(--muted);text-align:center;padding:2.5rem 1rem}
+.aviso{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:var(--gold);color:#181614;padding:.7rem 1.4rem;font-size:.92rem;box-shadow:0 6px 18px rgba(0,0,0,.5);opacity:0;transition:opacity .3s;pointer-events:none;max-width:92vw;text-align:center}
+.aviso.ver{opacity:1}
+#telaLogin{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+#telaLogin .caixa{width:100%;max-width:22rem;text-align:center}
+#telaLogin h2{font-size:1.6rem;margin-bottom:.3rem}#telaLogin h2 span{color:var(--gold)}
+#telaLogin p{color:var(--muted);font-size:.9rem;margin-bottom:1.4rem}
+#telaLogin input{width:100%;background:var(--surface);border:1px solid var(--line);color:var(--text);padding:.9rem;font-size:1.2rem;text-align:center;letter-spacing:.3em;margin-bottom:.8rem}
+#telaLogin button{width:100%}
+.erro{color:#d98a76;font-size:.85rem;margin-top:.6rem;min-height:1.2rem}
+.data{font-size:.78rem;color:var(--muted);margin-bottom:.4rem}
+</style>
+</head>
+<body>
+<div id="telaLogin">
+  <div class="caixa">
+    <h2>Painel do <span>Lucio</span></h2>
+    <p>Digite a senha para entrar</p>
+    <input id="senha" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••">
+    <button class="b b-gold" id="btnEntrar">Entrar</button>
+    <div class="erro" id="erroLogin"></div>
+  </div>
+</div>
+
+<header class="topo">
+  <h1>Painel do <span>Lucio</span></h1>
+  <button class="sair" id="btnSair">Sair</button>
+</header>
+<nav class="abas">
+  <button data-aba="fila" class="ativa">Fila</button>
+  <button data-aba="historico">Histórico</button>
+  <button data-aba="publicacoes">Publicações</button>
+</nav>
+<main id="conteudo"><div class="vazio">Carregando…</div></main>
+<div class="aviso" id="aviso"></div>
+
+<script src="config.js"></script>
+<script type="module" src="painel.js"></script>
+</body>
+</html>
