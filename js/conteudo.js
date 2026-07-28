@@ -24,18 +24,40 @@
 
   var elNoticias = document.getElementById("noticias-dinamicas");
   if (elNoticias) {
-    buscar("noticias?status=eq.aprovada&select=titulo,descricao,url,fonte,aprovada_em&order=aprovada_em.desc&limit=40")
+    buscar("noticias?status=eq.aprovada&select=titulo,descricao,url,fonte,aprovada_em&order=aprovada_em.desc&limit=500")
       .then(function (itens) {
         if (!itens.length) return;
-        elNoticias.innerHTML =
-          '<h2>Selecionadas pelo Dr. Lúcio</h2><div class="grid grid-2">' +
-          itens.map(function (n) {
-            return '<a class="card" href="' + urlSegura(n.url) + '" target="_blank" rel="noopener">' +
+        var PORPAG = 12;
+        var totalPag = Math.ceil(itens.length / PORPAG);
+        var pagina = 1;
+        function render() {
+          var lote = itens.slice((pagina - 1) * PORPAG, pagina * PORPAG);
+          var html = '<div class="grid grid-2 grid-noticias">' + lote.map(function (n) {
+            var destino = "leitura.html?u=" + encodeURIComponent(urlSegura(n.url)) +
+              "&f=" + encodeURIComponent(n.fonte || "");
+            return '<a class="card" href="' + destino + '">' +
               "<h3>" + esc(n.titulo) + "</h3>" +
-              '<p>' + esc(n.descricao) + "</p>" +
+              "<p>" + esc(n.descricao) + "</p>" +
               '<p style="margin-top:.6rem;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)">' +
               esc(n.fonte) + " · " + dataBr(n.aprovada_em) + "</p></a>";
           }).join("") + "</div>";
+          if (totalPag > 1) {
+            html += '<div class="paginacao">';
+            for (var p = 1; p <= totalPag; p++) {
+              html += '<button data-pag="' + p + '"' + (p === pagina ? ' class="atual"' : "") + ">" + p + "</button>";
+            }
+            html += "</div>";
+          }
+          elNoticias.innerHTML = html;
+        }
+        elNoticias.addEventListener("click", function (ev) {
+          var b = ev.target.closest("[data-pag]");
+          if (!b) return;
+          pagina = parseInt(b.getAttribute("data-pag"), 10);
+          render();
+          elNoticias.scrollIntoView({ behavior: "smooth" });
+        });
+        render();
       })
       .catch(function () {});
   }

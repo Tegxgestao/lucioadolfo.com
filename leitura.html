@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Leitura — Lúcio Adolfo</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=9">
+<style>
+:root{--bg:#141311;--line:#2e2a24;--text:#ece7dc;--muted:#a59d8e;--gold:#c2a05f;--gold-soft:#8a7344}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;height:100vh;height:100svh;display:flex;flex-direction:column}
+.barra{display:flex;align-items:center;gap:.8rem;padding:.7rem 1rem;background:#1c1a17;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.barra a{text-decoration:none;font-size:.9rem;padding:.5rem .9rem;border:1px solid var(--gold-soft);color:var(--gold)}
+.barra a.voltar{background:var(--gold);color:#181614;border-color:var(--gold);font-weight:600}
+.barra span{color:var(--muted);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;margin-left:auto}
+.dica{padding:.45rem 1rem;font-size:.8rem;color:var(--muted);background:#181614;border-bottom:1px solid var(--line)}
+iframe{flex:1;width:100%;border:0;background:#fff}
+</style>
+</head>
+<body>
+<div class="barra">
+  <a class="voltar" href="noticias.html">← Voltar</a>
+  <a id="original" target="_blank" rel="noopener">Abrir no site original</a>
+  <span id="fonte"></span>
+</div>
+<div class="dica">Você está lendo dentro do site do Dr. Lúcio Adolfo. Se a notícia não aparecer abaixo, o veículo não permite exibição incorporada — toque em "Abrir no site original".</div>
+<iframe id="quadro" title="Notícia original" referrerpolicy="no-referrer"></iframe>
+<script>
+var qs = new URLSearchParams(location.search);
+var u = qs.get("u") || "";
+var f = (qs.get("f") || "").slice(0, 40);
+if (!/^https?:\/\//i.test(u)) {
+  location.replace("noticias.html");
+} else {
+  document.getElementById("quadro").src = u;
+  var o = document.getElementById("original");
+  o.href = u;
+  document.getElementById("fonte").textContent = f;
+}
+</script>
+</body>
+</html>

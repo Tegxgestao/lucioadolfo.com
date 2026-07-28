@@ -24,7 +24,7 @@ h1,h2{font-family:"Playfair Display",Georgia,serif}
 .topo h1{font-size:1.15rem}.topo h1 span{color:var(--gold)}
 .sair{background:none;border:1px solid var(--line);color:var(--muted);padding:.35rem .8rem;cursor:pointer;font-size:.85rem}
 .abas{display:flex;border-bottom:1px solid var(--line);background:var(--surface)}
-.abas button{flex:1;background:none;border:none;color:var(--muted);padding:.85rem .3rem;font-size:.92rem;cursor:pointer;border-bottom:2px solid transparent}
+.abas button{flex:1;background:none;border:none;color:var(--muted);padding:.85rem .2rem;font-size:.84rem;cursor:pointer;border-bottom:2px solid transparent}
 .abas button.ativa{color:var(--gold);border-bottom-color:var(--gold)}
 main{max-width:720px;margin:0 auto;padding:1rem}
 .card{background:var(--surface);border:1px solid var(--line);padding:1rem;margin-bottom:1rem}
@@ -58,6 +58,12 @@ main{max-width:720px;margin:0 auto;padding:1rem}
     <input id="senha" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••">
     <button class="b b-gold" id="btnEntrar">Entrar</button>
     <div class="erro" id="erroLogin"></div>
+    <div id="dicaInstalar" style="display:none;margin-top:1.6rem;padding:1rem;border:1px solid var(--line);text-align:left;font-size:.85rem;color:var(--muted)">
+      <strong style="color:var(--gold)">Instalar como aplicativo:</strong><br>
+      No iPhone (Safari): toque no botão <strong>Compartilhar</strong> (quadrado com seta ↑, na barra de baixo) e escolha <strong>"Adicionar à Tela de Início"</strong>.<br>
+      No Android (Chrome): menu <strong>⋮</strong> → <strong>"Adicionar à tela inicial"</strong>.<br>
+      O ícone "Painel do Lucio" aparecerá como um app.
+    </div>
   </div>
 </div>
 
@@ -66,14 +72,14 @@ main{max-width:720px;margin:0 auto;padding:1rem}
   <button class="sair" id="btnSair">Sair</button>
 </header>
 <nav class="abas">
-  <button data-aba="fila" class="ativa">Fila</button>
+  <button data-aba="fila" class="ativa">Fila de Notícias</button>
   <button data-aba="historico">Histórico</button>
   <button data-aba="publicacoes">Publicações</button>
 </nav>
 <main id="conteudo"><div class="vazio">Carregando…</div></main>
 <div class="aviso" id="aviso"></div>
 
-<script src="config.js"></script>
-<script type="module" src="painel.js"></script>
+<script src="config.js?v=9"></script>
+<script type="module" src="painel.js?v=9"></script>
 </body>
 </html>
