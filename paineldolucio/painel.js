@@ -40,6 +40,7 @@ async function mostrar(aba) {
   conteudo.innerHTML = '<div class="vazio">Carregando…</div>';
   if (aba === "fila") return renderFila();
   if (aba === "historico") return renderHistorico();
+  if (aba === "livros") return renderLivros();
   return renderPublicacoes();
 }
 
@@ -147,6 +148,89 @@ async function agirPublicacao(card, acao) {
   }
 }
 
+// ===== Livros =====
+async function renderLivros() {
+  const { data, error } = await sb.from("livros").select("*").order("ordem", { ascending: true }).order("id", { ascending: true });
+  if (error) return (conteudo.innerHTML = `<div class="vazio">Erro: ${esc(error.message)}</div>`);
+  const cartao = (l) => `<div class="card" data-id="${l.id}">
+      <div class="fonte">${l.status === "publicado" ? "No site" : "Oculto"} · ordem ${l.ordem}</div>
+      <div class="capa-linha">
+        ${l.capa_url ? `<img class="capa-mini" src="${esc(l.capa_url)}" alt="">` : '<div class="capa-vazia">sem capa</div>'}
+        <div style="flex:1">
+          <input class="t" value="${esc(l.titulo)}" placeholder="Título">
+          <input class="s" value="${esc(l.selo)}" placeholder="Editora / selo">
+          <input class="o" type="number" value="${l.ordem}" placeholder="Ordem" style="max-width:7rem">
+        </div>
+      </div>
+      <textarea class="d">${esc(l.sinopse)}</textarea>
+      <input type="file" class="arquivo-capa" accept="image/*">
+      <div class="acoes" style="margin-top:.6rem">
+        <button class="b b-ok" data-acao="salvar-livro">Salvar</button>
+        <button class="b ${l.status === "publicado" ? "b-no" : "b-ok"}" data-acao="alternar-livro" data-status="${l.status}">
+          ${l.status === "publicado" ? "Ocultar do site" : "Mostrar no site"}</button>
+      </div></div>`;
+  conteudo.innerHTML = `<div class="card" id="novoLivro">
+      <div class="fonte">Novo livro</div>
+      <input class="t" placeholder="Título">
+      <input class="s" placeholder="Editora / selo">
+      <textarea class="d" placeholder="Comentário / sinopse do livro"></textarea>
+      <div class="acoes"><button class="b b-gold" data-acao="novo-livro" style="color:#181614">Adicionar livro</button></div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:.5rem">Depois de adicionar, envie a foto da capa no cartão do livro.</p>
+    </div>` + data.map(cartao).join("");
+}
+
+async function agirLivro(card, acao) {
+  const id = card.dataset.id;
+  if (acao === "novo-livro") {
+    const titulo = card.querySelector(".t").value.trim();
+    if (!titulo) return aviso("Dê um título ao livro.");
+    const { error } = await sb.from("livros").insert({
+      titulo, selo: card.querySelector(".s").value.trim(), sinopse: card.querySelector(".d").value.trim(),
+    });
+    if (error) return aviso("Erro: " + error.message);
+    aviso("Livro adicionado ao site.");
+    return mostrar("livros");
+  }
+  if (acao === "salvar-livro") {
+    const { error } = await sb.from("livros").update({
+      titulo: card.querySelector(".t").value.trim(),
+      selo: card.querySelector(".s").value.trim(),
+      sinopse: card.querySelector(".d").value.trim(),
+      ordem: parseInt(card.querySelector(".o").value, 10) || 100,
+      atualizada_em: new Date().toISOString(),
+    }).eq("id", id);
+    return error ? aviso("Erro: " + error.message) : aviso("Livro salvo.");
+  }
+  if (acao === "alternar-livro") {
+    const novo = card.querySelector('[data-acao="alternar-livro"]').dataset.status === "publicado" ? "oculto" : "publicado";
+    const { error } = await sb.from("livros").update({ status: novo, atualizada_em: new Date().toISOString() }).eq("id", id);
+    if (error) return aviso("Erro: " + error.message);
+    aviso(novo === "publicado" ? "Livro de volta ao site." : "Livro oculto do site.");
+    return mostrar("livros");
+  }
+}
+
+async function enviarCapa(card, arquivo) {
+  const id = card.dataset.id;
+  if (!id) return aviso("Adicione o livro primeiro; depois envie a capa.");
+  aviso("Enviando capa…");
+  const ext = (arquivo.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+  const caminho = `livro-${id}-${Date.now()}.${ext}`;
+  const { error } = await sb.storage.from("capas").upload(caminho, arquivo, { upsert: true });
+  if (error) return aviso("Erro no envio: " + error.message);
+  const { data } = sb.storage.from("capas").getPublicUrl(caminho);
+  const { error: e2 } = await sb.from("livros").update({ capa_url: data.publicUrl, atualizada_em: new Date().toISOString() }).eq("id", id);
+  if (e2) return aviso("Erro: " + e2.message);
+  aviso("Capa atualizada no site.");
+  mostrar("livros");
+}
+
+document.addEventListener("change", (e) => {
+  if (!e.target.classList.contains("arquivo-capa")) return;
+  const card = e.target.closest(".card");
+  if (e.target.files && e.target.files[0]) enviarCapa(card, e.target.files[0]);
+});
+
 // ===== Eventos =====
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-acao]");
@@ -154,6 +238,7 @@ document.addEventListener("click", (e) => {
   const card = b.closest(".card");
   const acao = b.dataset.acao;
   if (["aprovar", "rejeitar", "remover"].includes(acao)) return agirNoticia(card, acao === "remover" ? "remover" : acao);
+  if (["novo-livro", "salvar-livro", "alternar-livro"].includes(acao)) return agirLivro(card, acao);
   return agirPublicacao(card, acao);
 });
 document.querySelectorAll(".abas button").forEach((b) => b.addEventListener("click", () => mostrar(b.dataset.aba)));

@@ -62,6 +62,28 @@
       .catch(function () {});
   }
 
+  var elLivros = document.getElementById("lista-livros");
+  if (elLivros) {
+    buscar("livros?status=eq.publicado&select=titulo,selo,sinopse,capa_url&order=ordem.asc,id.asc")
+      .then(function (itens) {
+        if (!itens.length) return;
+        elLivros.innerHTML = itens.map(function (l) {
+          var capa = /^https?:\/\//i.test(l.capa_url || "")
+            ? '<img src="' + esc(l.capa_url) + '" alt="Capa do livro ' + esc(l.titulo) + '" style="width:100%;aspect-ratio:2/3;object-fit:cover;border:1px solid var(--gold-soft);display:block">'
+            : '<div class="cover"><span>' + esc(l.titulo) + "</span></div>";
+          var zap = "https://wa.me/5531999237641?text=" +
+            encodeURIComponent("Olá! Tenho interesse no livro " + l.titulo + ".");
+          return '<div class="book"><div>' + capa + "</div><div>" +
+            "<h3>" + esc(l.titulo) + "</h3>" +
+            (l.selo ? '<p class="pub">' + esc(l.selo) + "</p>" : "") +
+            "<p>" + esc(l.sinopse) + "</p>" +
+            '<a class="btn" href="' + zap + '" target="_blank" rel="noopener">Quero este livro</a>' +
+            "</div></div>";
+        }).join("");
+      })
+      .catch(function () {});
+  }
+
   var elPubs = document.getElementById("publicacoes-dinamicas");
   if (elPubs) {
     buscar("publicacoes?status=eq.publicada&select=titulo,corpo,criada_em&order=criada_em.desc")

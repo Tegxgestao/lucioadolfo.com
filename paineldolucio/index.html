@@ -24,7 +24,11 @@ h1,h2{font-family:"Playfair Display",Georgia,serif}
 .topo h1{font-size:1.15rem}.topo h1 span{color:var(--gold)}
 .sair{background:none;border:1px solid var(--line);color:var(--muted);padding:.35rem .8rem;cursor:pointer;font-size:.85rem}
 .abas{display:flex;border-bottom:1px solid var(--line);background:var(--surface)}
-.abas button{flex:1;background:none;border:none;color:var(--muted);padding:.85rem .2rem;font-size:.84rem;cursor:pointer;border-bottom:2px solid transparent}
+.abas button{flex:1;background:none;border:none;color:var(--muted);padding:.85rem .15rem;font-size:.78rem;cursor:pointer;border-bottom:2px solid transparent}
+.capa-linha{display:flex;gap:.8rem;align-items:flex-start;margin-bottom:.6rem}
+.capa-mini{width:84px;min-width:84px;aspect-ratio:2/3;object-fit:cover;border:1px solid var(--gold-soft);background:#0f0e0c}
+.capa-vazia{width:84px;min-width:84px;aspect-ratio:2/3;border:1px dashed var(--gold-soft);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.7rem;text-align:center;padding:.3rem}
+.arquivo-capa{font-size:.8rem;color:var(--muted);max-width:100%}
 .abas button.ativa{color:var(--gold);border-bottom-color:var(--gold)}
 main{max-width:720px;margin:0 auto;padding:1rem}
 .card{background:var(--surface);border:1px solid var(--line);padding:1rem;margin-bottom:1rem}
@@ -69,6 +73,7 @@ main{max-width:720px;margin:0 auto;padding:1rem}
   <button data-aba="fila" class="ativa">Fila de Notícias</button>
   <button data-aba="historico">Histórico</button>
   <button data-aba="publicacoes">Publicações</button>
+  <button data-aba="livros">Livros</button>
 </nav>
 <main id="conteudo"><div class="vazio">Carregando…</div></main>
 <div class="aviso" id="aviso"></div>
