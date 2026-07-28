@@ -84,31 +84,48 @@
             '<div class="pub-corpo clamp sin-livro" data-li="' + i + '"><p>' + esc(l.sinopse) + "</p></div>" +
             "</div></div>";
         }).join("");
-        // A descrição recolhida desce até a linha do botão "Mais detalhes";
-        // o botão some quando o texto cabe inteiro
-        requestAnimationFrame(function () {
+        // A descrição recolhida desce até a linha do botão "Mais detalhes".
+        // Remede sempre que capas e fontes terminam de carregar.
+        function ajustarLivros() {
           elLivros.querySelectorAll(".book").forEach(function (book) {
             var col = book.querySelector(".col-capa");
             var el = book.querySelector(".sin-livro");
-            if (!col || !el) return;
+            var b = book.querySelector("[data-ler-livro]");
+            if (!col || !el || el.dataset.aberto === "1") return;
+            el.classList.add("clamp");
             var alvo = Math.max(80, Math.round(col.getBoundingClientRect().bottom - el.getBoundingClientRect().top));
             el.dataset.alvo = alvo;
             el.style.maxHeight = alvo + "px";
             if (el.scrollHeight <= alvo + 4) {
               el.classList.remove("clamp");
               el.style.maxHeight = "none";
-              var b = book.querySelector("[data-ler-livro]");
               if (b) b.style.display = "none";
+            } else if (b) {
+              b.style.display = "";
             }
           });
+        }
+        requestAnimationFrame(ajustarLivros);
+        window.addEventListener("load", ajustarLivros);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarLivros);
+        elLivros.querySelectorAll(".col-capa img").forEach(function (im) {
+          im.addEventListener("load", ajustarLivros);
         });
         elLivros.addEventListener("click", function (ev) {
           var b = ev.target.closest("[data-ler-livro]");
           if (!b) return;
           var el = elLivros.querySelector('.sin-livro[data-li="' + b.getAttribute("data-ler-livro") + '"]');
-          var recolhido = el.classList.toggle("clamp");
-          el.style.maxHeight = recolhido ? el.dataset.alvo + "px" : "none";
-          b.textContent = recolhido ? "Mais detalhes" : "Menos detalhes";
+          if (el.classList.contains("clamp")) {
+            el.classList.remove("clamp");
+            el.style.maxHeight = "none";
+            el.dataset.aberto = "1";
+            b.textContent = "Menos detalhes";
+          } else {
+            el.dataset.aberto = "";
+            el.classList.add("clamp");
+            el.style.maxHeight = el.dataset.alvo + "px";
+            b.textContent = "Mais detalhes";
+          }
         });
       })
       .catch(function () {});
