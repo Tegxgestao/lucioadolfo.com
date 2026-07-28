@@ -74,7 +74,7 @@ async function entrar() {
 async function atualizarContador() {
   const { count } = await sb.from("noticias").select("id", { count: "exact", head: true }).eq("status", "pendente");
   const b = document.querySelector('.abas button[data-aba="fila"]');
-  if (b) b.textContent = "Fila de Notícias" + (count ? ` (${count})` : "");
+  if (b) b.innerHTML = "Fila de Notícias" + (count ? ` <span class="cont">${Number(count)}</span>` : "");
 }
 
 // ===== Fila =====
@@ -255,10 +255,24 @@ async function renderLivros() {
       <input class="t" placeholder="Título">
       <input class="s" placeholder="Editora / selo">
       <input class="e" type="number" min="0" placeholder="Livros em estoque" style="max-width:12rem">
+      <label style="font-size:.78rem;color:var(--muted)">Foto da capa (anexar imagem ou tirar foto):</label>
+      <input type="file" class="arquivo-capa" accept="image/*" style="margin-bottom:.6rem">
       <textarea class="d" placeholder="Comentário / sinopse do livro"></textarea>
       <div class="acoes"><button class="b b-gold" data-acao="novo-livro" style="color:#181614">Adicionar livro</button></div>
-      <p style="font-size:.78rem;color:var(--muted);margin-top:.5rem">Depois de adicionar, envie a foto da capa no cartão do livro.</p>
     </div>` + data.map(cartao).join("");
+}
+
+async function subirCapa(id, arquivo) {
+  if (!(await sessaoOk())) return false;
+  aviso("Enviando capa…", 8000);
+  const blob = await redimensionar(arquivo);
+  const caminho = `livro-${id}-${Date.now()}.jpg`;
+  const { error } = await sb.storage.from("capas").upload(caminho, blob, { upsert: true, contentType: "image/jpeg" });
+  if (error) { aviso("Erro no envio da capa: " + error.message, 6000); return false; }
+  const { data } = sb.storage.from("capas").getPublicUrl(caminho);
+  const { error: e2 } = await sb.from("livros").update({ capa_url: data.publicUrl, atualizada_em: new Date().toISOString() }).eq("id", id);
+  if (e2) { aviso("Erro: " + e2.message, 6000); return false; }
+  return true;
 }
 
 async function agirLivro(card, acao) {
@@ -267,13 +281,15 @@ async function agirLivro(card, acao) {
   if (acao === "novo-livro") {
     const titulo = card.querySelector(".t").value.trim();
     if (!titulo) return aviso("Dê um título ao livro.");
-    const { error } = await sb.from("livros").insert({
+    const arquivo = card.querySelector(".arquivo-capa")?.files?.[0] || null;
+    const { data: novo, error } = await sb.from("livros").insert({
       titulo,
       selo: card.querySelector(".s").value.trim(),
       sinopse: card.querySelector(".d").value.trim(),
       estoque: Math.max(0, parseInt(card.querySelector(".e").value, 10) || 0),
-    });
-    if (error) return aviso("Erro: " + error.message);
+    }).select("id").single();
+    if (error) return aviso("Erro: " + error.message, 6000);
+    if (arquivo) await subirCapa(novo.id, arquivo);
     aviso("Livro adicionado ao site.");
     return mostrar("livros");
   }
@@ -302,25 +318,18 @@ async function agirLivro(card, acao) {
 
 async function enviarCapa(card, arquivo) {
   const id = card.dataset.id;
-  if (!id) return aviso("Adicione o livro primeiro; depois envie a capa.", 5000);
-  if (!(await sessaoOk())) return;
-  aviso("Enviando capa…", 8000);
-  const blob = await redimensionar(arquivo);
-  const caminho = `livro-${id}-${Date.now()}.jpg`;
-  const { error } = await sb.storage.from("capas").upload(caminho, blob, { upsert: true, contentType: "image/jpeg" });
-  if (error) return aviso("Erro no envio da capa: " + error.message, 6000);
-  const { data } = sb.storage.from("capas").getPublicUrl(caminho);
-  const { error: e2 } = await sb.from("livros").update({ capa_url: data.publicUrl, atualizada_em: new Date().toISOString() }).eq("id", id);
-  if (e2) return aviso("Erro: " + e2.message, 6000);
-  aviso("Capa atualizada no site.");
-  mostrar("livros");
+  if (!id) return;
+  if (await subirCapa(id, arquivo)) {
+    aviso("Capa atualizada no site.");
+    mostrar("livros");
+  }
 }
 
 document.addEventListener("change", (e) => {
   const card = e.target.closest(".card");
   const arquivo = e.target.files && e.target.files[0];
   if (!card || !arquivo) return;
-  if (e.target.classList.contains("arquivo-capa")) return enviarCapa(card, arquivo);
+  if (e.target.classList.contains("arquivo-capa") && card.dataset.id) return enviarCapa(card, arquivo);
   if (e.target.classList.contains("arquivo-foto") && card.dataset.id) {
     enviarFotoPub(card.dataset.id, arquivo).then((ok) => { if (ok) { aviso("Foto atualizada no site."); mostrar("publicacoes"); } });
   }
