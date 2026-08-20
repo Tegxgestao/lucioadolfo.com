@@ -112,30 +112,54 @@
   var v = document.querySelector(".player");
   if (!v) return;
 
-  // Garante o inicio automatico mesmo se o atributo autoplay for ignorado
-  // (alguns navegadores so obedecem apos o video ter dados suficientes).
-  function tentarTocar() {
-    if (v.paused) { var p = v.play(); if (p) p.catch(function () {}); }
-  }
-  tentarTocar();
-  v.addEventListener("loadeddata", tentarTocar, { once: true });
-  v.addEventListener("canplay", tentarTocar, { once: true });
+  // Nenhum navegador deixa um video comecar sozinho COM som para quem nunca
+  // visitou o site - e politica de autoplay, nao ha como contornar. A
+  // estrategia abaixo tira o maximo do que a plataforma permite:
+  //   1. tenta com som (funciona para quem ja assistiu videos no dominio)
+  //   2. se for barrado, volta ao mudo, que sempre e permitido, e o video
+  //      comeca na hora do mesmo jeito
+  //   3. o primeiro toque em qualquer lugar liga o som
+  var tentouComSom = false;
 
-  // Primeiro contato do usuario com a pagina liga o som, sem precisar
-  // acertar nenhum botao - qualquer toque, clique, rolagem ou tecla serve.
+  function tocarMudo() {
+    v.muted = true;
+    var p = v.play();
+    if (p) p.catch(function () {});
+  }
+
+  function tentarComSom() {
+    if (tentouComSom) return;
+    tentouComSom = true;
+    v.muted = false;
+    v.volume = 1;
+    var p = v.play();
+    if (!p) { tocarMudo(); return; }
+    p.then(function () {
+      // Alguns navegadores aceitam o play e pausam logo em seguida.
+      setTimeout(function () { if (v.paused) tocarMudo(); }, 120);
+    }).catch(function () {
+      tocarMudo();
+    });
+  }
+
+  tentarComSom();
+  v.addEventListener("loadeddata", function () { if (v.paused) tocarMudo(); }, { once: true });
+  v.addEventListener("canplay", function () { if (v.paused) tocarMudo(); }, { once: true });
+
+  // Primeiro contato com a pagina liga o som - qualquer toque, clique,
+  // rolagem ou tecla serve, sem precisar acertar botao nenhum.
   function ligarSom() {
     if (!v.muted) return;
     v.muted = false;
     v.volume = 1;
-    tentarTocar();
+    if (v.paused) v.play().catch(function () {});
   }
   ["pointerdown", "touchstart", "keydown", "wheel", "scroll"].forEach(function (evento) {
     window.addEventListener(evento, ligarSom, { once: true, passive: true });
   });
 
-  // Se a aba estava em segundo plano, retoma ao voltar
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) tentarTocar();
+    if (!document.hidden && v.paused) v.play().catch(function () {});
   });
 })();
 </script>
