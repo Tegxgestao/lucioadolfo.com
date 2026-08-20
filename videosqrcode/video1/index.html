@@ -10,11 +10,11 @@
 <link rel="apple-touch-icon" href="/img/icone-app.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#141311; --surface:#1c1a17; --line:#2e2a24;
-    --text:#ece7dc; --muted:#a59d8e; --gold:#c2a05f;
+    --text:#ece7dc; --muted:#a59d8e; --gold:#c2a05f; --gold-claro:#d9bd82;
     --serif:"Playfair Display",Georgia,serif;
     --sans:"Inter",system-ui,"Segoe UI",sans-serif;
   }
@@ -24,21 +24,59 @@
     font-family:var(--sans); line-height:1.7;
     -webkit-font-smoothing:antialiased;
     min-height:100vh; display:flex; align-items:center; justify-content:center;
-    padding:1.5rem 1rem;
+    padding:2rem 1rem;
   }
   .wrap{width:100%; max-width:900px; text-align:center}
-  .marca{
-    font-family:var(--serif); font-size:1.1rem; color:var(--text);
-    letter-spacing:.02em; margin-bottom:1.5rem; display:block;
+
+  /* ===== Assinatura no topo ===== */
+  .marca{margin-bottom:3.25rem}
+  .marca .nome{
+    display:block;
+    font-family:var(--serif); font-weight:500;
+    font-size:clamp(1.85rem,6vw,2.9rem);
+    letter-spacing:.06em; line-height:1.1;
+    color:var(--text);
   }
-  .marca span{color:var(--gold)}
+  .marca .nome b{
+    font-weight:600;
+    background:linear-gradient(180deg,var(--gold-claro),var(--gold));
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:var(--gold);
+  }
+  /* filete dourado que fecha a assinatura */
+  .marca .regua{
+    display:block; width:120px; height:1px; margin:1.1rem auto 0;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+  .marca .oab{
+    display:block; margin-top:.85rem;
+    font-size:.68rem; letter-spacing:.34em; text-transform:uppercase;
+    color:var(--muted);
+  }
+
+  /* ===== Player ===== */
+  .palco{position:relative; display:block}
   .player{
     width:100%; aspect-ratio:16/9; background:#000;
     border:1px solid var(--line); display:block;
   }
+  /* Aviso de som: navegador de celular so deixa iniciar sozinho se estiver mudo */
+  .som{
+    position:absolute; left:50%; bottom:14%; transform:translateX(-50%);
+    display:inline-flex; align-items:center; gap:.5rem;
+    padding:.7rem 1.25rem; border:1px solid var(--gold);
+    background:rgba(20,19,17,.86); color:var(--gold);
+    font-family:var(--sans); font-size:.9rem; letter-spacing:.04em;
+    cursor:pointer; backdrop-filter:blur(4px);
+    animation:pulsa 2.2s ease-in-out infinite;
+  }
+  .som:hover{background:var(--gold); color:#181614}
+  .som[hidden]{display:none}
+  @keyframes pulsa{0%,100%{opacity:1}50%{opacity:.62}}
+
   h1{
     font-family:var(--serif); font-weight:600; line-height:1.2;
-    font-size:clamp(1.25rem,4vw,1.9rem); margin:1.5rem 0 .4rem;
+    font-size:clamp(1.25rem,4vw,1.9rem); margin:1.75rem 0 .4rem;
   }
   .capitulo{
     font-size:.78rem; letter-spacing:.24em; text-transform:uppercase;
@@ -48,28 +86,72 @@
     display:inline-flex; align-items:center; gap:.55rem;
     padding:.85rem 1.6rem; border:1px solid var(--gold); color:var(--gold);
     letter-spacing:.06em; font-size:.95rem; text-decoration:none;
-    margin-top:1.75rem; transition:all .2s;
+    margin-top:1.9rem; transition:all .2s;
   }
   .btn:hover,.btn:focus{background:var(--gold); color:#181614}
+
   @media (max-width:620px){
-    body{padding:1rem .75rem}
-    .marca{margin-bottom:1rem}
+    body{padding:1.25rem .75rem}
+    .marca{margin-bottom:2.25rem}
+    .som{bottom:16%; font-size:.82rem; padding:.6rem 1rem}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .som{animation:none}
   }
 </style>
 </head>
 <body>
   <main class="wrap">
-    <span class="marca">Lúcio <span>Adolfo</span></span>
+    <header class="marca">
+      <span class="nome">Lúcio <b>Adolfo</b></span>
+      <span class="regua"></span>
+      <span class="oab">Advocacia Criminal</span>
+    </header>
 
-    <video class="player" controls playsinline preload="metadata">
-      <source src="../video1.mp4" type="video/mp4">
-      Seu navegador não reproduz vídeo. <a href="../video1.mp4">Baixe o arquivo</a>.
-    </video>
+    <div class="palco">
+      <video id="v" class="player" controls playsinline autoplay muted preload="auto">
+        <source src="../video1.mp4" type="video/mp4">
+        Seu navegador não reproduz vídeo. <a href="../video1.mp4">Baixe o arquivo</a>.
+      </video>
+      <button id="som" class="som" type="button" hidden>🔊 Toque para ouvir</button>
+    </div>
 
     
     <h1>Vídeo 1</h1>
 
     <a class="btn" href="https://lucioadolfo.com/meus-livros.html">← Voltar ao site</a>
   </main>
+
+<script>
+// Celular so autoriza inicio automatico se o video estiver mudo. Entao ele
+// comeca mudo e oferecemos um toque para ligar o som, sem reiniciar.
+(function () {
+  var v = document.getElementById("v");
+  var botao = document.getElementById("som");
+
+  function ligarSom() {
+    v.muted = false;
+    v.volume = 1;
+    botao.hidden = true;
+    if (v.paused) v.play();
+  }
+
+  botao.addEventListener("click", ligarSom);
+  // tocar em qualquer lugar do video tambem liga o som, na primeira vez
+  v.addEventListener("click", function () { if (v.muted) ligarSom(); }, { once: true });
+
+  // So mostra o aviso se o video realmente comecou mudo.
+  // Se o navegador bloquear ate isso, os controles normais continuam la.
+  v.play().then(function () {
+    if (v.muted) botao.hidden = false;
+  }).catch(function () {
+    botao.hidden = true;
+  });
+
+  // Se o usuario der play manualmente com o som mudo, o aviso volta
+  v.addEventListener("play", function () { if (v.muted) botao.hidden = false; });
+  v.addEventListener("volumechange", function () { if (!v.muted) botao.hidden = true; });
+})();
+</script>
 </body>
 </html>
