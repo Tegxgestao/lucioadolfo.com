@@ -54,10 +54,44 @@
     color:var(--muted);
   }
   /* ===== Player ===== */
+  .palco{position:relative; display:block}
   .player{
     width:100%; aspect-ratio:16/9; background:#000;
     border:1px solid var(--line); display:block;
   }
+
+  /* Aviso central de som. Navegador nenhum deixa iniciar com som para quem
+     chega pela primeira vez, entao o video comeca mudo e este aviso explica
+     em uma frase o que fazer. Some ao primeiro toque. */
+  .aviso-som{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:1rem; cursor:pointer; border:0; width:100%; padding:1rem;
+    background:radial-gradient(ellipse at center,rgba(20,19,17,.72) 0%,rgba(20,19,17,.38) 70%);
+    font-family:var(--sans); color:var(--text);
+    -webkit-tap-highlight-color:transparent;
+    transition:opacity .35s ease;
+  }
+  .aviso-som[hidden]{display:none}
+  .aviso-som.saindo{opacity:0; pointer-events:none}
+  .aviso-som .disco{
+    width:76px; height:76px; border-radius:50%;
+    border:1px solid var(--gold);
+    background:rgba(20,19,17,.75);
+    display:flex; align-items:center; justify-content:center;
+    animation:respira 2.4s ease-in-out infinite;
+  }
+  .aviso-som .disco svg{width:32px; height:32px; fill:var(--gold)}
+  .aviso-som .frase{
+    font-size:clamp(.95rem,3.2vw,1.1rem);
+    letter-spacing:.03em; text-shadow:0 1px 6px rgba(0,0,0,.7);
+  }
+  .aviso-som .frase b{color:var(--gold); font-weight:500}
+  @keyframes respira{
+    0%,100%{transform:scale(1); box-shadow:0 0 0 0 rgba(194,160,95,.34)}
+    50%{transform:scale(1.06); box-shadow:0 0 0 14px rgba(194,160,95,0)}
+  }
+  @media (prefers-reduced-motion:reduce){ .aviso-som .disco{animation:none} }
 
   h1{
     font-family:var(--serif); font-weight:600; line-height:1.2;
@@ -96,10 +130,19 @@
       O som e religado pelo script abaixo, no primeiro toque em qualquer
       lugar da pagina.
     -->
-    <video class="player" controls playsinline autoplay muted preload="auto">
-      <source src="../video1.mp4?v=2" type="video/mp4">
-      Seu navegador não reproduz vídeo. <a href="../video1.mp4?v=2">Baixe o arquivo</a>.
-    </video>
+    <div class="palco">
+      <video class="player" controls playsinline autoplay muted preload="auto">
+        <source src="../video1.mp4?v=2" type="video/mp4">
+        Seu navegador não reproduz vídeo. <a href="../video1.mp4?v=2">Baixe o arquivo</a>.
+      </video>
+
+      <button class="aviso-som" type="button" hidden aria-label="Ativar o som do vídeo">
+        <span class="disco" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z"/></svg>
+        </span>
+        <span class="frase">Toque para <b>ativar o som</b></span>
+      </button>
+    </div>
 
     
     <h1>Agradecimento</h1>
@@ -146,17 +189,35 @@
   v.addEventListener("loadeddata", function () { if (v.paused) tocarMudo(); }, { once: true });
   v.addEventListener("canplay", function () { if (v.paused) tocarMudo(); }, { once: true });
 
+  // Aviso central: so aparece se o video realmente ficou mudo, e some
+  // assim que o som entra.
+  var aviso = document.querySelector(".aviso-som");
+
+  function mostrarAviso() { if (aviso && v.muted && !v.paused) aviso.hidden = false; }
+  function esconderAviso() {
+    if (!aviso || aviso.hidden) return;
+    aviso.classList.add("saindo");
+    setTimeout(function () { aviso.hidden = true; }, 380);
+  }
+
   // Primeiro contato com a pagina liga o som - qualquer toque, clique,
-  // rolagem ou tecla serve, sem precisar acertar botao nenhum.
+  // rolagem ou tecla serve, sem precisar acertar o aviso.
   function ligarSom() {
-    if (!v.muted) return;
+    if (!v.muted) { esconderAviso(); return; }
     v.muted = false;
     v.volume = 1;
     if (v.paused) v.play().catch(function () {});
+    esconderAviso();
   }
   ["pointerdown", "touchstart", "keydown", "wheel", "scroll"].forEach(function (evento) {
     window.addEventListener(evento, ligarSom, { once: true, passive: true });
   });
+  if (aviso) aviso.addEventListener("click", ligarSom);
+  v.addEventListener("volumechange", function () { if (!v.muted) esconderAviso(); });
+
+  // Da um instante para a tentativa com som resolver antes de decidir
+  setTimeout(mostrarAviso, 700);
+  v.addEventListener("playing", function () { setTimeout(mostrarAviso, 300); });
 
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden && v.paused) v.play().catch(function () {});
