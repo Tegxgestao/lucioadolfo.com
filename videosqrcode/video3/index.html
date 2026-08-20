@@ -29,7 +29,7 @@
   .wrap{width:100%; max-width:900px; text-align:center}
 
   /* ===== Assinatura no topo ===== */
-  .marca{margin-bottom:3.25rem}
+  .marca{margin-bottom:2.5rem}
   .marca .nome{
     display:block;
     font-family:var(--serif); font-weight:500;
@@ -43,7 +43,6 @@
     -webkit-background-clip:text; background-clip:text;
     -webkit-text-fill-color:transparent; color:var(--gold);
   }
-  /* filete dourado que fecha a assinatura */
   .marca .regua{
     display:block; width:120px; height:1px; margin:1.1rem auto 0;
     background:linear-gradient(90deg,transparent,var(--gold),transparent);
@@ -53,12 +52,21 @@
     font-size:.68rem; letter-spacing:.34em; text-transform:uppercase;
     color:var(--muted);
   }
+
+  /* Titulo da pagina: so aparece quando ha mais de uma parte, para dar nome
+     ao conjunto. Em pagina de video unico o nome fica abaixo do player. */
+  .titulo-conjunto{
+    font-family:var(--serif); font-weight:600; line-height:1.2;
+    font-size:clamp(1.4rem,4.4vw,2.1rem); margin-bottom:2.25rem;
+  }
+
   /* ===== Player ===== */
   .palco{position:relative; display:block}
   .player{
     width:100%; aspect-ratio:16/9; background:#000;
     border:1px solid var(--line); display:block;
   }
+  .bloco + .bloco{margin-top:2.75rem}
 
   /* Aviso central de som. Navegador nenhum deixa iniciar com som para quem
      chega pela primeira vez, entao o video comeca mudo e este aviso explica
@@ -93,9 +101,9 @@
   }
   @media (prefers-reduced-motion:reduce){ .aviso-som .disco{animation:none} }
 
-  h1{
+  h1,.rotulo{
     font-family:var(--serif); font-weight:600; line-height:1.2;
-    font-size:clamp(1.25rem,4vw,1.9rem); margin:1.75rem 0 .4rem;
+    font-size:clamp(1.25rem,4vw,1.9rem); margin:1.5rem 0 .4rem;
   }
   .capitulo{
     font-size:.78rem; letter-spacing:.24em; text-transform:uppercase;
@@ -111,7 +119,9 @@
 
   @media (max-width:620px){
     body{padding:1.25rem .75rem}
-    .marca{margin-bottom:2.25rem}
+    .marca{margin-bottom:1.75rem}
+    .titulo-conjunto{margin-bottom:1.5rem}
+    .bloco + .bloco{margin-top:2rem}
   }
 </style>
 </head>
@@ -123,46 +133,35 @@
       <span class="oab">Advocacia Criminal</span>
     </header>
 
-    <!--
-      autoplay + muted: nenhum navegador inicia video sozinho COM som para
-      quem chega pela primeira vez - nem no computador. Iniciar mudo e a
-      unica forma de o play ser automatico de verdade.
-      O som e religado pelo script abaixo, no primeiro toque em qualquer
-      lugar da pagina.
-    -->
-    <div class="palco">
-      <video class="player" controls playsinline autoplay muted preload="auto">
-        <source src="../video3.mp4" type="video/mp4">
-        Seu navegador não reproduz vídeo. <a href="../video3.mp4">Baixe o arquivo</a>.
-      </video>
-
+    <div class="bloco">
+      <div class="palco">
+        <video class="player" controls playsinline autoplay muted preload="auto">
+          <source src="../video3.mp4" type="video/mp4">
+          Seu navegador não reproduz vídeo. <a href="../video3.mp4">Baixe o arquivo</a>.
+        </video>
       <button class="aviso-som" type="button" hidden aria-label="Ativar o som do vídeo">
         <span class="disco" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z"/></svg>
         </span>
         <span class="frase">Toque para <b>ativar o som</b></span>
       </button>
+      </div>
+      <h1>Caso Goleiro Bruno</h1>
     </div>
-
-    
-    <h1>Caso Goleiro Bruno</h1>
 
     <a class="btn" href="https://lucioadolfo.com/meus-livros.html">← Voltar ao site</a>
   </main>
 
 <script>
 (function () {
-  var v = document.querySelector(".player");
-  if (!v) return;
+  var players = document.querySelectorAll(".player");
+  if (!players.length) return;
 
-  // Nenhum navegador deixa um video comecar sozinho COM som para quem nunca
-  // visitou o site - e politica de autoplay, nao ha como contornar. A
-  // estrategia abaixo tira o maximo do que a plataforma permite:
-  //   1. tenta com som (funciona para quem ja assistiu videos no dominio)
-  //   2. se for barrado, volta ao mudo, que sempre e permitido, e o video
-  //      comeca na hora do mesmo jeito
-  //   3. o primeiro toque em qualquer lugar liga o som
-  var tentouComSom = false;
+  // Só o primeiro video inicia sozinho. Com duas partes, tocar as duas ao
+  // mesmo tempo seria uma confusao sonora.
+  var v = players[0];
+  var aviso = document.querySelector(".aviso-som");
+  var tentou = false;
 
   function tocarMudo() {
     v.muted = true;
@@ -170,28 +169,24 @@
     if (p) p.catch(function () {});
   }
 
+  // Nenhum navegador inicia com som para quem chega pela primeira vez - e
+  // politica de autoplay. Tentamos com som (funciona para quem ja assistiu
+  // videos no dominio) e caimos para mudo se for barrado.
   function tentarComSom() {
-    if (tentouComSom) return;
-    tentouComSom = true;
+    if (tentou) return;
+    tentou = true;
     v.muted = false;
     v.volume = 1;
     var p = v.play();
     if (!p) { tocarMudo(); return; }
     p.then(function () {
-      // Alguns navegadores aceitam o play e pausam logo em seguida.
       setTimeout(function () { if (v.paused) tocarMudo(); }, 120);
-    }).catch(function () {
-      tocarMudo();
-    });
+    }).catch(tocarMudo);
   }
 
   tentarComSom();
   v.addEventListener("loadeddata", function () { if (v.paused) tocarMudo(); }, { once: true });
   v.addEventListener("canplay", function () { if (v.paused) tocarMudo(); }, { once: true });
-
-  // Aviso central: so aparece se o video realmente ficou mudo, e some
-  // assim que o som entra.
-  var aviso = document.querySelector(".aviso-som");
 
   function mostrarAviso() { if (aviso && v.muted && !v.paused) aviso.hidden = false; }
   function esconderAviso() {
@@ -200,8 +195,6 @@
     setTimeout(function () { aviso.hidden = true; }, 380);
   }
 
-  // Primeiro contato com a pagina liga o som - qualquer toque, clique,
-  // rolagem ou tecla serve, sem precisar acertar o aviso.
   function ligarSom() {
     if (!v.muted) { esconderAviso(); return; }
     v.muted = false;
@@ -215,12 +208,14 @@
   if (aviso) aviso.addEventListener("click", ligarSom);
   v.addEventListener("volumechange", function () { if (!v.muted) esconderAviso(); });
 
-  // Da um instante para a tentativa com som resolver antes de decidir
   setTimeout(mostrarAviso, 700);
   v.addEventListener("playing", function () { setTimeout(mostrarAviso, 300); });
 
-  document.addEventListener("visibilitychange", function () {
-    if (!document.hidden && v.paused) v.play().catch(function () {});
+  // Tocar uma parte pausa as outras, para nunca haver dois audios juntos.
+  players.forEach(function (p) {
+    p.addEventListener("play", function () {
+      players.forEach(function (o) { if (o !== p && !o.paused) o.pause(); });
+    });
   });
 })();
 </script>
