@@ -53,26 +53,11 @@
     font-size:.68rem; letter-spacing:.34em; text-transform:uppercase;
     color:var(--muted);
   }
-
   /* ===== Player ===== */
-  .palco{position:relative; display:block}
   .player{
     width:100%; aspect-ratio:16/9; background:#000;
     border:1px solid var(--line); display:block;
   }
-  /* Aviso de som: navegador de celular so deixa iniciar sozinho se estiver mudo */
-  .som{
-    position:absolute; left:50%; bottom:14%; transform:translateX(-50%);
-    display:inline-flex; align-items:center; gap:.5rem;
-    padding:.7rem 1.25rem; border:1px solid var(--gold);
-    background:rgba(20,19,17,.86); color:var(--gold);
-    font-family:var(--sans); font-size:.9rem; letter-spacing:.04em;
-    cursor:pointer; backdrop-filter:blur(4px);
-    animation:pulsa 2.2s ease-in-out infinite;
-  }
-  .som:hover{background:var(--gold); color:#181614}
-  .som[hidden]{display:none}
-  @keyframes pulsa{0%,100%{opacity:1}50%{opacity:.62}}
 
   h1{
     font-family:var(--serif); font-weight:600; line-height:1.2;
@@ -93,10 +78,6 @@
   @media (max-width:620px){
     body{padding:1.25rem .75rem}
     .marca{margin-bottom:2.25rem}
-    .som{bottom:16%; font-size:.82rem; padding:.6rem 1rem}
-  }
-  @media (prefers-reduced-motion:reduce){
-    .som{animation:none}
   }
 </style>
 </head>
@@ -108,13 +89,17 @@
       <span class="oab">Advocacia Criminal</span>
     </header>
 
-    <div class="palco">
-      <video id="v" class="player" controls playsinline autoplay muted preload="auto">
-        <source src="../video1.mp4" type="video/mp4">
-        Seu navegador não reproduz vídeo. <a href="../video1.mp4">Baixe o arquivo</a>.
-      </video>
-      <button id="som" class="som" type="button" hidden>🔊 Toque para ouvir</button>
-    </div>
+    <!--
+      autoplay SEM muted, de proposito:
+      no computador o video comeca sozinho ja com som;
+      no celular o navegador bloqueia o inicio automatico, aparece o play, e
+      ao tocar o video ja vem com som. Assim ninguem assiste mudo sem perceber
+      - que e o que aconteceria com "autoplay muted".
+    -->
+    <video class="player" controls playsinline autoplay preload="auto">
+      <source src="../video1.mp4" type="video/mp4">
+      Seu navegador não reproduz vídeo. <a href="../video1.mp4">Baixe o arquivo</a>.
+    </video>
 
     
     <h1>Agradecimento</h1>
@@ -122,36 +107,5 @@
     <a class="btn" href="https://lucioadolfo.com/meus-livros.html">← Voltar ao site</a>
   </main>
 
-<script>
-// Celular so autoriza inicio automatico se o video estiver mudo. Entao ele
-// comeca mudo e oferecemos um toque para ligar o som, sem reiniciar.
-(function () {
-  var v = document.getElementById("v");
-  var botao = document.getElementById("som");
-
-  function ligarSom() {
-    v.muted = false;
-    v.volume = 1;
-    botao.hidden = true;
-    if (v.paused) v.play();
-  }
-
-  botao.addEventListener("click", ligarSom);
-  // tocar em qualquer lugar do video tambem liga o som, na primeira vez
-  v.addEventListener("click", function () { if (v.muted) ligarSom(); }, { once: true });
-
-  // So mostra o aviso se o video realmente comecou mudo.
-  // Se o navegador bloquear ate isso, os controles normais continuam la.
-  v.play().then(function () {
-    if (v.muted) botao.hidden = false;
-  }).catch(function () {
-    botao.hidden = true;
-  });
-
-  // Se o usuario der play manualmente com o som mudo, o aviso volta
-  v.addEventListener("play", function () { if (v.muted) botao.hidden = false; });
-  v.addEventListener("volumechange", function () { if (!v.muted) botao.hidden = true; });
-})();
-</script>
 </body>
 </html>
