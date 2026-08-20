@@ -30,10 +30,15 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
 
       # As exclusoes NAO sao opcionais:
-      # midia/ guarda os 15 videos, que nao estao no git. Sem essa linha,
-      # o --delete apaga todos eles do servidor na primeira publicacao.
+      # os videos vivem no servidor e NAO estao no git. Sem excluir *.mp4 e
+      # midia/, o --delete apaga todos eles na primeira publicacao.
+      #
+      # A conexao SSH com a Hostinger falha de forma intermitente (ja houve
+      # "Connection timed out" e falha de ssh-keyscan). Como o rsync so copia
+      # o que mudou, repetir e barato e seguro.
       - name: Enviar arquivos
         run: |
+          enviar() {
           rsync -avz ${{ inputs.simular && '--dry-run' || '' }} --delete \
             --exclude '.git/' \
             --exclude '.github/' \
@@ -44,5 +49,17 @@ jobs:
             --exclude 'CNAME' \
             --exclude 'README.md' \
             --exclude '.playwright-mcp/' \
-            -e "ssh -p ${{ secrets.HOSTINGER_PORT }} -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
+            -e "ssh -p ${{ secrets.HOSTINGER_PORT }} -i ~/.ssh/deploy -o StrictHostKeyChecking=yes -o ConnectTimeout=25" \
             ./ "${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_PATH }}/"
+          }
+
+          for tentativa in 1 2 3; do
+            if enviar; then
+              echo "publicado na tentativa $tentativa"
+              exit 0
+            fi
+            echo "tentativa $tentativa falhou; nova tentativa em 20s"
+            sleep 20
+          done
+          echo "as 3 tentativas falharam"
+          exit 1
