@@ -8,10 +8,13 @@ DirectoryIndex index.html
 </IfModule>
 
 # Cache de estaticos
+# CSS e JS: 1 dia. O site usa ?v=NN nos links para furar o cache quando muda,
+# mas se alguem esquecer de subir esse numero o prejuizo fica limitado a um dia
+# em vez de uma semana. No GitHub Pages esse cache era de 10 minutos.
 <IfModule mod_expires.c>
   ExpiresActive On
-  ExpiresByType text/css "access plus 7 days"
-  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType text/css "access plus 1 day"
+  ExpiresByType application/javascript "access plus 1 day"
   ExpiresByType image/jpeg "access plus 30 days"
   ExpiresByType image/png "access plus 30 days"
   ExpiresByType image/svg+xml "access plus 30 days"
