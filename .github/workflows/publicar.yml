@@ -38,6 +38,9 @@ jobs:
             --exclude '.git/' \
             --exclude '.github/' \
             --exclude 'midia/' \
+            --exclude '*.mp4' \
+            --exclude '*.webm' \
+            --exclude '*.mov' \
             --exclude 'CNAME' \
             --exclude 'README.md' \
             --exclude '.playwright-mcp/' \

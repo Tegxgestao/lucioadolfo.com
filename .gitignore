@@ -3,3 +3,5 @@
 # Videos ficam no servidor, nunca no git (1-3GB nao versionaveis)
 midia/
 *.mp4
+*.webm
+*.mov
