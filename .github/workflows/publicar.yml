@@ -16,22 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # O ssh-keyscan falha de forma intermitente (visto em 1 de 3 execucoes).
-      # Tenta 3 vezes; se ainda assim falhar, segue em frente - o rsync abaixo
-      # usa accept-new e resolve a chave do host sozinho.
+      # A chave do host e FIXADA no secret HOSTINGER_KNOWN_HOSTS, capturada uma
+      # vez com ssh-keyscan. Antes o workflow buscava essa chave pela rede a
+      # cada execucao, o que falhava de forma intermitente (1 em 3) e derrubava
+      # a publicacao. Fixar remove a dependencia de rede E mantem a verificacao
+      # estrita: se o servidor apresentar outra chave, o deploy para.
       - name: Preparar chave SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/deploy
           chmod 600 ~/.ssh/deploy
-          for tentativa in 1 2 3; do
-            if ssh-keyscan -p ${{ secrets.HOSTINGER_PORT }} -H ${{ secrets.HOSTINGER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null; then
-              echo "chave do host obtida na tentativa $tentativa"
-              break
-            fi
-            echo "ssh-keyscan falhou (tentativa $tentativa), repetindo em 5s"
-            sleep 5
-          done
+          echo "${{ secrets.HOSTINGER_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
       # As exclusoes NAO sao opcionais:
       # midia/ guarda os 15 videos, que nao estao no git. Sem essa linha,
@@ -45,5 +41,5 @@ jobs:
             --exclude 'CNAME' \
             --exclude 'README.md' \
             --exclude '.playwright-mcp/' \
-            -e "ssh -p ${{ secrets.HOSTINGER_PORT }} -i ~/.ssh/deploy -o StrictHostKeyChecking=accept-new" \
+            -e "ssh -p ${{ secrets.HOSTINGER_PORT }} -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
             ./ "${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_PATH }}/"
