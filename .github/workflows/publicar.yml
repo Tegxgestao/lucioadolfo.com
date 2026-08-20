@@ -1,0 +1,39 @@
+name: Publicar site na Hostinger
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      simular:
+        description: "Simular sem enviar (dry-run)"
+        type: boolean
+        default: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar chave SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          ssh-keyscan -p ${{ secrets.HOSTINGER_PORT }} -H ${{ secrets.HOSTINGER_HOST }} >> ~/.ssh/known_hosts
+
+      # As exclusoes NAO sao opcionais:
+      # midia/ guarda os 15 videos, que nao estao no git. Sem essa linha,
+      # o --delete apaga todos eles do servidor na primeira publicacao.
+      - name: Enviar arquivos
+        run: |
+          rsync -avz ${{ inputs.simular && '--dry-run' || '' }} --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'midia/' \
+            --exclude 'CNAME' \
+            --exclude 'README.md' \
+            --exclude '.playwright-mcp/' \
+            -e "ssh -p ${{ secrets.HOSTINGER_PORT }} -i ~/.ssh/deploy" \
+            ./ "${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:${{ secrets.HOSTINGER_PATH }}/"
