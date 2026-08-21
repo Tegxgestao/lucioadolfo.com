@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Estas paginas nao podem ser encontradas por busca: o acesso e pelo QR do livro -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<title>Introdução — Lúcio Adolfo</title>
+<link rel="icon" type="image/svg+xml" href="/img/favicon.svg?v=24">
+<link rel="apple-touch-icon" href="/img/icone-app.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#141311; --surface:#1c1a17; --line:#2e2a24;
+    --text:#ece7dc; --muted:#a59d8e; --gold:#c2a05f; --gold-claro:#d9bd82;
+    --serif:"Playfair Display",Georgia,serif;
+    --sans:"Inter",system-ui,"Segoe UI",sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:var(--sans); line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:2rem 1rem;
+  }
+  .wrap{width:100%; max-width:900px; text-align:center}
+
+  /* ===== Assinatura no topo ===== */
+  .marca{margin-bottom:2.5rem}
+  .marca .nome{
+    display:block;
+    font-family:var(--serif); font-weight:500;
+    font-size:clamp(1.85rem,6vw,2.9rem);
+    letter-spacing:.06em; line-height:1.1;
+    color:var(--text);
+  }
+  .marca .nome b{
+    font-weight:600;
+    background:linear-gradient(180deg,var(--gold-claro),var(--gold));
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:var(--gold);
+  }
+  .marca .regua{
+    display:block; width:120px; height:1px; margin:1.1rem auto 0;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+  .marca .oab{
+    display:block; margin-top:.85rem;
+    font-size:.68rem; letter-spacing:.34em; text-transform:uppercase;
+    color:var(--muted);
+  }
+
+  /* Titulo da pagina: so aparece quando ha mais de uma parte, para dar nome
+     ao conjunto. Em pagina de video unico o nome fica abaixo do player. */
+  .titulo-conjunto{
+    font-family:var(--serif); font-weight:600; line-height:1.2;
+    font-size:clamp(1.4rem,4.4vw,2.1rem); margin-bottom:2.25rem;
+  }
+
+  /* ===== Player ===== */
+  .palco{position:relative; display:block}
+  .player{
+    width:100%; aspect-ratio:16/9; background:#000;
+    border:1px solid var(--line); display:block;
+  }
+  .bloco + .bloco{margin-top:2.75rem}
+
+  /* Aviso central de som. Navegador nenhum deixa iniciar com som para quem
+     chega pela primeira vez, entao o video comeca mudo e este aviso explica
+     em uma frase o que fazer. Some ao primeiro toque. */
+  .aviso-som{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:1rem; cursor:pointer; border:0; width:100%; padding:1rem;
+    background:radial-gradient(ellipse at center,rgba(20,19,17,.72) 0%,rgba(20,19,17,.38) 70%);
+    font-family:var(--sans); color:var(--text);
+    -webkit-tap-highlight-color:transparent;
+    transition:opacity .35s ease;
+  }
+  .aviso-som[hidden]{display:none}
+  .aviso-som.saindo{opacity:0; pointer-events:none}
+  .aviso-som .disco{
+    width:76px; height:76px; border-radius:50%;
+    border:1px solid var(--gold);
+    background:rgba(20,19,17,.75);
+    display:flex; align-items:center; justify-content:center;
+    animation:respira 2.4s ease-in-out infinite;
+  }
+  .aviso-som .disco svg{width:32px; height:32px; fill:var(--gold)}
+  .aviso-som .frase{
+    font-size:clamp(.95rem,3.2vw,1.1rem);
+    letter-spacing:.03em; text-shadow:0 1px 6px rgba(0,0,0,.7);
+  }
+  .aviso-som .frase b{color:var(--gold); font-weight:500}
+  @keyframes respira{
+    0%,100%{transform:scale(1); box-shadow:0 0 0 0 rgba(194,160,95,.34)}
+    50%{transform:scale(1.06); box-shadow:0 0 0 14px rgba(194,160,95,0)}
+  }
+  @media (prefers-reduced-motion:reduce){ .aviso-som .disco{animation:none} }
+
+  h1,.rotulo{
+    font-family:var(--serif); font-weight:600; line-height:1.2;
+    font-size:clamp(1.25rem,4vw,1.9rem); margin:1.5rem 0 .4rem;
+  }
+  .capitulo{
+    font-size:.78rem; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--gold); margin-bottom:.2rem;
+  }
+  .btn{
+    display:inline-flex; align-items:center; gap:.55rem;
+    padding:.85rem 1.6rem; border:1px solid var(--gold); color:var(--gold);
+    letter-spacing:.06em; font-size:.95rem; text-decoration:none;
+    margin-top:1.9rem; transition:all .2s;
+  }
+  .btn:hover,.btn:focus{background:var(--gold); color:#181614}
+
+  @media (max-width:620px){
+    body{padding:1.25rem .75rem}
+    .marca{margin-bottom:1.75rem}
+    .titulo-conjunto{margin-bottom:1.5rem}
+    .bloco + .bloco{margin-top:2rem}
+  }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="marca">
+      <span class="nome">Lúcio <b>Adolfo</b></span>
+      <span class="regua"></span>
+      <span class="oab">Advocacia Criminal</span>
+    </header>
+
+    <div class="bloco">
+      <div class="palco">
+        <video class="player" controls playsinline autoplay muted preload="auto">
+          <source src="../video6.mp4" type="video/mp4">
+          Seu navegador não reproduz vídeo. <a href="../video6.mp4">Baixe o arquivo</a>.
+        </video>
+      <button class="aviso-som" type="button" hidden aria-label="Ativar o som do vídeo">
+        <span class="disco" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z"/></svg>
+        </span>
+        <span class="frase">Toque para <b>ativar o som</b></span>
+      </button>
+      </div>
+      <h1>Introdução</h1>
+    </div>
+
+    <a class="btn" href="https://lucioadolfo.com/meus-livros.html">← Voltar ao site</a>
+  </main>
+
+<script>
+(function () {
+  var players = document.querySelectorAll(".player");
+  if (!players.length) return;
+
+  // Só o primeiro video inicia sozinho. Com duas partes, tocar as duas ao
+  // mesmo tempo seria uma confusao sonora.
+  var v = players[0];
+  var aviso = document.querySelector(".aviso-som");
+  var tentou = false;
+
+  function tocarMudo() {
+    v.muted = true;
+    var p = v.play();
+    if (p) p.catch(function () {});
+  }
+
+  // Nenhum navegador inicia com som para quem chega pela primeira vez - e
+  // politica de autoplay. Tentamos com som (funciona para quem ja assistiu
+  // videos no dominio) e caimos para mudo se for barrado.
+  function tentarComSom() {
+    if (tentou) return;
+    tentou = true;
+    v.muted = false;
+    v.volume = 1;
+    var p = v.play();
+    if (!p) { tocarMudo(); return; }
+    p.then(function () {
+      setTimeout(function () { if (v.paused) tocarMudo(); }, 120);
+    }).catch(tocarMudo);
+  }
+
+  tentarComSom();
+  v.addEventListener("loadeddata", function () { if (v.paused) tocarMudo(); }, { once: true });
+  v.addEventListener("canplay", function () { if (v.paused) tocarMudo(); }, { once: true });
+
+  function mostrarAviso() { if (aviso && v.muted && !v.paused) aviso.hidden = false; }
+  function esconderAviso() {
+    if (!aviso || aviso.hidden) return;
+    aviso.classList.add("saindo");
+    setTimeout(function () { aviso.hidden = true; }, 380);
+  }
+
+  function ligarSom() {
+    if (!v.muted) { esconderAviso(); return; }
+    v.muted = false;
+    v.volume = 1;
+    if (v.paused) v.play().catch(function () {});
+    esconderAviso();
+  }
+  ["pointerdown", "touchstart", "keydown", "wheel", "scroll"].forEach(function (evento) {
+    window.addEventListener(evento, ligarSom, { once: true, passive: true });
+  });
+  if (aviso) aviso.addEventListener("click", ligarSom);
+  v.addEventListener("volumechange", function () { if (!v.muted) esconderAviso(); });
+
+  setTimeout(mostrarAviso, 700);
+  v.addEventListener("playing", function () { setTimeout(mostrarAviso, 300); });
+
+  // Tocar uma parte pausa as outras, para nunca haver dois audios juntos.
+  players.forEach(function (p) {
+    p.addEventListener("play", function () {
+      players.forEach(function (o) { if (o !== p && !o.paused) o.pause(); });
+    });
+  });
+})();
+</script>
+</body>
+</html>
